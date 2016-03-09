@@ -156,8 +156,8 @@ inline void setNdConvolutionDesc(cudnnConvolutionDescriptor_t* conv,
   CHECK_EQ(nbDims, stride.size()+2) <<
       "Dimensions of filters and stride don't match !";
   std::vector<int> upscale(pad.size(), 1);
-// At least from version 4007, an extra CUDNN_TYPE is expected
-#if CUDNN_VERSION >= 4007
+// At least from version 4000, an extra CUDNN_TYPE is expected
+#if CUDNN_VERSION >= 4000
   CUDNN_CHECK(cudnnSetConvolutionNdDescriptor(*conv,
               pad.size(), pad.data(), stride.data(), upscale.data(),
               CUDNN_CROSS_CORRELATION, cudnn_type));

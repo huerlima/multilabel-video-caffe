@@ -127,7 +127,7 @@ void CudnnNdConvolutionLayer<Dtype>::Backward_gpu(
       // Gradient w.r.t. weights.
       if (this->param_propagate_down_[0]) {
         const Dtype* bottom_data = bottom[i]->gpu_data();
-#if CUDNN_VERSION >= 4007
+#if CUDNN_VERSION >= 4000
         CUDNN_CHECK(cudnnConvolutionBackwardFilter_v2(handle_[1*this->group_ +
                     g],
                     cudnn::dataType<Dtype>::one,
@@ -154,7 +154,7 @@ void CudnnNdConvolutionLayer<Dtype>::Backward_gpu(
           weight = this->blobs_[0]->gpu_data();
         }
         Dtype* bottom_diff = bottom[i]->mutable_gpu_diff();
-#if CUDNN_VERSION >= 4007
+#if CUDNN_VERSION >= 4000
         CUDNN_CHECK(cudnnConvolutionBackwardData_v2(handle_[2*this->group_ + g],
                     cudnn::dataType<Dtype>::one,
                     filter_desc_, weight + weight_offset_ * g,
