@@ -1,0 +1,18 @@
+net: "examples/c3d_ucf101/c3d_ucf101_train_test.prototxt"
+# num test samples / batch_size = 41822./30 = 1394.07
+test_iter: 1394
+test_interval: 1000
+base_lr: 0.0001
+momentum: 0.9
+weight_decay: 0.005
+lr_policy: "step"
+gamma: 0.1
+stepsize: 20000
+# Display every 20 iterations
+display: 20
+# The maximum number of iterations
+max_iter: 60000
+# snapshot intermediate results
+snapshot: 5000
+snapshot_prefix: "examples/c3d_ucf101/c3d_ucf101"
+solver_mode: GPU

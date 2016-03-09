@@ -1,0 +1,18 @@
+Just to remind myself (Chuck) some of the ongoing/undone work for Caffe+C3D merge
+- make sure to do regression test with previous 4D blobs without length (or depth) 
+  (n*c*h*w) -- DONE
+- python wrapper
+- check crop vs resize -- DONE
+- misc tools: e.g. computer volume mean, extract c3d features
+- check (N, C, W, H) vs (N, C, L, W, H) -- DONE
+- params _h and _w don't work as intended yet -- DONE
+- CUDNN supports 2dim convolution only -- clean wrapper for applying CPU /
+  non-CUDNN CUDA / CUDNN for 2dim/ndim conv -- DONE
+- Make sure changes in these are safe: blob.cpp,hpp, im2col_layer.cpp
+
+WORK TO DO
+- make sure all tests pass -- DONE
+- merge into dextro-research/Vision -- IN REVIEW
+- python
+- regression test (older models should work) -- ONGOING
+- when everything's done, remove print-out's, debug msgs
