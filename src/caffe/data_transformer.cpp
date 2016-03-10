@@ -220,14 +220,15 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
     Dtype* mean = NULL;
     const bool has_mean_file = param_.has_mean_file();
     if (has_mean_file) {
-      CHECK_EQ(mat_vector[0].channels(), data_mean_.channels());
+      CHECK(data_mean_.channels() == mat_vector[0].channels() ||
+            data_mean_.channels() == 1);
       CHECK_EQ(mat_vector[0].rows, data_mean_.height());
       CHECK_EQ(mat_vector[0].cols, data_mean_.width());
       mean = data_mean_.mutable_cpu_data();
       if (1 != length && length == data_mean_.length()) {
         c3d_mean_subtraction_applied = true;
       } else {
-        CHECK_EQ(1, data_mean_.height());
+        CHECK_EQ(1, data_mean_.channels()); // will be applied later
         c3d_mean_subtraction_applied = false;
       }
     } else {
