@@ -450,10 +450,9 @@ bool Blob<Dtype>::ShapeEquals(const BlobProto& other) {
     // methods as these index from the beginning of the blob shape, where legacy
     // parameter blobs were indexed from the end of the blob shape (e.g., bias
     // Blob shape (1 x 1 x 1 x N), IP layer weight Blob shape (1 x 1 x M x N)).
-    return shape_.size() <= 5 &&
-           LegacyShape(-5) == other.num() &&
-           LegacyShape(-4) == other.channels() &&
-           LegacyShape(-3) == 1 &&
+    return shape_.size() <= 4 &&
+           LegacyShape(-4) == other.num() &&
+           LegacyShape(-3) == other.channels() &&
            LegacyShape(-2) == other.height() &&
            LegacyShape(-1) == other.width();
   }
