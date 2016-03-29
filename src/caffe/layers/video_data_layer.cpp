@@ -23,8 +23,8 @@ VideoDataLayer<Dtype>::~VideoDataLayer<Dtype>() {
 }
 
 template <typename Dtype>
-void VideoDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
+void VideoDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>&
+      bottom, const vector<Blob<Dtype>*>& top) {
   const int new_length = this->layer_param_.video_data_param().new_length();
   const int new_height = this->layer_param_.video_data_param().new_height();
   const int new_width  = this->layer_param_.video_data_param().new_width();
@@ -46,12 +46,6 @@ void VideoDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     video_and_label.second = frame_num;
     video_and_label.third = label;
     lines_.push_back(video_and_label);
-    //if (lines_.size() % 1000 == 0) {
-    //  LOG(INFO) << "filename=" << filename <<
-    //               ", frame_num=" << frame_num <<
-    //               ", label=" << label <<
-    //               ", lines_.size()=" << lines_.size();
-    //}
   }
 
   if (this->layer_param_.video_data_param().shuffle()) {
@@ -91,8 +85,6 @@ void VideoDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   const bool is_video = true;
   vector<int> top_shape = this->data_transformer_->InferBlobShape(cv_imgs,
                                                                   is_video);
-  //for (int i=0; i<top_shape.size(); ++i)
-  //  LOG(INFO) << "top_shape["<<i<<"]="<<top_shape[i];
   this->transformed_data_.Reshape(top_shape);
   // Reshape prefetch_data and top[0] according to the batch_size.
   const int batch_size = this->layer_param_.video_data_param().batch_size();
@@ -155,12 +147,6 @@ void VideoDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
                                           " at frame " <<
                                           lines_[lines_id_].second <<
                                           " correctly.";
-  //LOG(INFO) << "cv_imgs.size()=" << cv_imgs.size() <<
-  //             ", cv_imgs[0].rows=" << cv_imgs[0].rows <<
-  //             ", cv_imgs[0].cols=" << cv_imgs[0].cols <<
-  //             ", cv_imgs[0](20,20)=" << (int) cv_imgs[0].at<uchar>(20,20) <<
-  //             ", cv_imgs[15](20,20)=" << (int) cv_imgs[15].at<uchar>(20,20);
-  //LOG(INFO) << "label="<<lines_[lines_id_].third;
   // Use data_transformer to infer the expected blob shape from a cv_imgs.
   bool is_video = true;
   vector<int> top_shape = this->data_transformer_->InferBlobShape(cv_imgs,
@@ -183,9 +169,8 @@ void VideoDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     bool read_video_result = ReadVideoToCVMat(root_folder +
                                                lines_[lines_id_].first,
                                                lines_[lines_id_].second,
-                                               new_length, new_height, new_width,
-                                               is_color,
-                                               &cv_imgs);
+                                               new_length, new_height,
+                                               new_width, is_color, &cv_imgs);
     CHECK(read_video_result) << "Could not load " << lines_[lines_id_].first <<
                                 " at frame " << lines_[lines_id_].second << ".";
     CHECK_EQ(cv_imgs.size(), new_length) << "Could not load " <<
