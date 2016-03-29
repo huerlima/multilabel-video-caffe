@@ -98,8 +98,6 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
   bottom_offset_ = this->bottom_dim_ / this->group_;
   top_offset_ = this->top_dim_ / this->group_;
   const bool forced_3d = this->forced_3d_;
-  //std::cout << "cudnn_conv_layer.cpp: num_spatial_axes="<<this->num_spatial_axes_<<std::endl;
-  //std::cout << "cudnn_conv_layer.cpp: forced_3d="<<forced_3d<<std::endl;
   const int height = bottom[0]->shape(this->channel_axis_ + 1 + forced_3d);
   const int width = bottom[0]->shape(this->channel_axis_ + 2 + forced_3d);
   const int height_out = top[0]->shape(this->channel_axis_ + 1 + forced_3d);
@@ -110,8 +108,6 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
   const int* stride_data = this->stride_.cpu_data();
   const int stride_h = stride_data[0];
   const int stride_w = stride_data[1];
-  //std::cout << "cudnn_conv_layer.cpp: h="<<height<<", w="<<width<<", h_o="<<height_out<<
-  //             ", w_o="<<width_out<<", pad_h="<<pad_h <<std::endl;
 
   // Specify workspace limit for kernels directly until we have a
   // planning strategy and a rewrite of Caffe's GPU memory mangagement

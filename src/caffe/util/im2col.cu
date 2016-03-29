@@ -53,21 +53,6 @@ void im2col_gpu(const Dtype* data_im, const int channels,
       (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
   int num_kernels = channels * height_col * width_col;
   // NOLINT_NEXT_LINE(whitespace/operators)
-/*
-  std::cout<<
-    "height="<<height<<", "<<
-    "width="<<width<<", "<<
-    "kernel_h="<<kernel_h<<", "<<
-    "kernel_w="<<kernel_w<<", "<<
-    "pad_h="<<pad_h<<", "<<
-    "pad_w="<<pad_w<<", "<<
-    "stride_h="<<stride_h<<", "<<
-    "stride_w="<<stride_w<<", "<<
-    "dilation_h="<<dilation_h<<", "<<
-    "dilation_w="<<dilation_w<<", "<<
-    "height_col="<<height_col<<", "<<
-    "width_col="<<width_col<<std::endl;
-*/
   im2col_gpu_kernel<Dtype><<<CAFFE_GET_BLOCKS(num_kernels),
                              CAFFE_CUDA_NUM_THREADS>>>(
       num_kernels, data_im, height, width, kernel_h, kernel_w, pad_h,

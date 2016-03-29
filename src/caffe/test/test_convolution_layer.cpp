@@ -22,15 +22,9 @@ template <typename Dtype>
 void caffe_conv(const Blob<Dtype>* in, ConvolutionParameter* conv_param,
     const vector<shared_ptr<Blob<Dtype> > >& weights,
     Blob<Dtype>* out) {
-  //std::cout << "caffe_conv:: weights[0]->num_axes()="<<weights[0]->num_axes() << std::endl;
-  //std::cout << "caffe_conv:: weights[1]->num_axes()="<<weights[1]->num_axes() << std::endl;
-  //std::cout << "caffe_conv:: in->num_axes()="<<in->num_axes() << std::endl;
-  //std::cout << "caffe_conv:: out->num_axes()="<<out->num_axes() << std::endl;
   const bool has_depth = (out->num_axes() == 5);
-  const bool forced_3d_ = has_depth && (in->shape(2) == 1);
+  const bool forced_3d = has_depth && (in->shape(2) == 1);
   if (!has_depth) { CHECK_EQ(4, out->num_axes()); }
-  //std::cout << "caffe_conv:: has_depth="<<has_depth<< std::endl;
-  //std::cout << "caffe_conv:: forced_3d_="<<forced_3d_<< std::endl;
   // Kernel size, stride, and pad
   int kernel_h, kernel_w;
   if (conv_param->has_kernel_h() || conv_param->has_kernel_w()) {
@@ -57,14 +51,12 @@ void caffe_conv(const Blob<Dtype>* in, ConvolutionParameter* conv_param,
   dilation_h = dilation_w = conv_param->dilation_size() ?
                             conv_param->dilation(0) : 1;
   int kernel_d, pad_d, stride_d, dilation_d;
-  if (has_depth && !forced_3d_) {
-//    std::cout << "use same kernel_d/stride_d/pad_d/dilation_d from _h counterpart." << std::endl;
+  if (has_depth && !forced_3d) {
     kernel_d = kernel_h;
     stride_d = stride_h;
     pad_d = pad_h;
     dilation_d = dilation_h;
   } else {
-    //std::cout << "use 1 for kernel_d/stride_d/dilation_d" << std::endl;
     kernel_d = stride_d = dilation_d = 1;
     pad_d = 0;
   }
@@ -74,7 +66,7 @@ void caffe_conv(const Blob<Dtype>* in, ConvolutionParameter* conv_param,
   int k_g = in->shape(1) / groups;
   int o_head, k_head;
   // Convolution
-  vector<int> weight_offset(4 + (has_depth && !forced_3d_));
+  vector<int> weight_offset(4 + (has_depth && !forced_3d));
   vector<int> in_offset(4 + has_depth);
   vector<int> out_offset(4 + has_depth);
   Dtype* out_data = out->mutable_cpu_data();
@@ -96,29 +88,11 @@ void caffe_conv(const Blob<Dtype>* in, ConvolutionParameter* conv_param,
                       if (in_z >= 0 && in_z < (has_depth ? in->shape(2) : 1)
                           && in_y >= 0 && in_y < in->shape(2 + has_depth)
                           && in_x >= 0 && in_x < in->shape(3 + has_depth)) {
-/*
-                        std::cout <<
-                          "o="<<o<<
-                          ", k="<<k<<
-                          ", z="<<z<<
-                          ", y="<<y<<
-                          ", x="<<x<<
-                          ", r="<<r<<
-                          ", p="<<p<<
-                          ", q="<<q<<
-                          ", z="<<z<<
-                          ", weight_offset.size()="<<weight_offset.size()<<
-                          std::endl;
-*/
                         weight_offset[0] = o + o_head;
-                        //std::cout << "weight_offset[0]="<<weight_offset[0] << std::endl;
                         weight_offset[1] = k;
-                        //std::cout << "weight_offset[1]="<<weight_offset[1] << std::endl;
-                        if (has_depth && !forced_3d_) { weight_offset[2] = r; }
-                        weight_offset[2 + (has_depth && !forced_3d_)] = p;
-                        weight_offset[3 + (has_depth && !forced_3d_)] = q;
-                        //for (int kk=0; kk<weight_offset.size(); kk++)
-                        //  std::cout << "weight_offset["<<kk<<"]="<<weight_offset[k]<<std::endl;
+                        if (has_depth && !forced_3d) { weight_offset[2] = r; }
+                        weight_offset[2 + (has_depth && !forced_3d)] = p;
+                        weight_offset[3 + (has_depth && !forced_3d)] = q;
                         in_offset[0] = n;
                         in_offset[1] = k + k_head;
                         if (has_depth) { in_offset[2] = in_z; }
@@ -297,7 +271,7 @@ TYPED_TEST(ConvolutionLayerTest, TestDilatedConvolution) {
   vector<int> bottom_shape;
   bottom_shape.push_back(2);
   bottom_shape.push_back(3);
-  bottom_shape.push_back(1); // necessary!
+  bottom_shape.push_back(1);  // necessary
   bottom_shape.push_back(8);
   bottom_shape.push_back(7);
   this->blob_bottom_vec_.push_back(this->blob_bottom_2_);

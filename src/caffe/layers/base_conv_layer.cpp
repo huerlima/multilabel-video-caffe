@@ -17,13 +17,11 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   channel_axis_ = bottom[0]->CanonicalAxisIndex(conv_param.axis());
   const int num_axes = bottom[0]->num_axes();
   int first_spatial_axis;
-  if (num_axes == 5 && channel_axis_ == 1 &&
-      bottom[0]->shape(2) == 1) {
+  if (num_axes == 5 && channel_axis_ == 1 && bottom[0]->shape(2) == 1) {
     forced_3d_ = true;
-    first_spatial_axis = 3; // not 2
-    num_spatial_axes_ = 2;  // not 3
-  }
-  else {
+    first_spatial_axis = 3;   // not 2
+    num_spatial_axes_ = 2;    // not 3
+  } else {
     forced_3d_ = false;
     first_spatial_axis = channel_axis_ + 1;
     num_spatial_axes_ = num_axes - first_spatial_axis;
@@ -47,22 +45,21 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       CHECK(num_kernel_dims == 1 ||
             num_kernel_dims == num_spatial_axes_ ||
             num_kernel_dims == num_spatial_axes_ + 1)
-          << "kernel_size must be specified once, or once per spatial dimension "
-          << "(kernel_size specified " << num_kernel_dims << " times; "
-          << num_spatial_axes_ << " spatial dims).";
+          << "kernel_size must be specified once, or once per spatial "
+          << "dimension (kernel_size specified " << num_kernel_dims
+          << " times; " << num_spatial_axes_ << " spatial dims).";
     } else {
       CHECK(num_kernel_dims == 1 || num_kernel_dims == num_spatial_axes_)
-          << "kernel_size must be specified once, or once per spatial dimension "
-          << "(kernel_size specified " << num_kernel_dims << " times; "
-          << num_spatial_axes_ << " spatial dims).";
+          << "kernel_size must be specified once, or once per spatial "
+          << "dimension (kernel_size specified " << num_kernel_dims
+          << " times; " << num_spatial_axes_ << " spatial dims).";
     }
     if (num_kernel_dims == 1) {
       for (int i = 0; i < num_spatial_axes_; ++i) {
         kernel_shape_data[i] =
             conv_param.kernel_size(0);
       }
-    }
-    else if (num_kernel_dims == num_spatial_axes_) {
+    } else if (num_kernel_dims == num_spatial_axes_) {
       for (int i = 0; i < num_spatial_axes_; ++i) {
         kernel_shape_data[i] =
             conv_param.kernel_size(i);
@@ -71,7 +68,7 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     if (num_kernel_dims == num_spatial_axes_ + 1) {
       for (int i = 0; i < num_spatial_axes_; ++i) {
         kernel_shape_data[i] =
-            conv_param.kernel_size(i + 1); // ignore the first kernel_size
+            conv_param.kernel_size(i + 1);   // ignore the first kernel_size
       }
     }
   }
@@ -113,7 +110,7 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       else if (num_stride_dims == num_spatial_axes_ )
         stride_data[i] = conv_param.stride(i);
       else if (num_stride_dims == num_spatial_axes_ + 1)
-        stride_data[i] = conv_param.stride(i + 1); // ignore the first one
+        stride_data[i] = conv_param.stride(i + 1);   // ignore the first one
       CHECK_GT(stride_data[i], 0) << "Stride dimensions must be nonzero.";
     }
   }
@@ -152,7 +149,7 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       else if (num_pad_dims == num_spatial_axes_ )
         pad_data[i] = conv_param.pad(i);
       else if (num_pad_dims == num_spatial_axes_ + 1)
-        pad_data[i] = conv_param.pad(i + 1); // ignore the first one
+        pad_data[i] = conv_param.pad(i + 1);   // ignore the first one
     }
   }
   // Setup dilation dimensions (dilation_).
@@ -182,7 +179,7 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     else if (num_dilation_dims == num_spatial_axes_ )
       dilation_data[i] = conv_param.dilation(i);
     else if (num_dilation_dims == num_spatial_axes_ + 1)
-      dilation_data[i] = conv_param.dilation(i + 1); // ignore the first one
+      dilation_data[i] = conv_param.dilation(i + 1);   // ignore the first one
   }
   // Special case: im2col is the identity for 1x1 convolution with stride 1
   // and no padding, so flag for skipping the buffer and transformation.
@@ -305,7 +302,8 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     if (reverse_dimensions()) {
       conv_input_shape_data[i] = top[0]->shape(channel_axis_ + i + forced_3d_);
     } else {
-      conv_input_shape_data[i] = bottom[0]->shape(channel_axis_ + i + forced_3d_);
+      conv_input_shape_data[i] = bottom[0]->shape(channel_axis_ + i +
+          forced_3d_);
     }
   }
   // The im2col result buffer will only hold one image at a time to avoid

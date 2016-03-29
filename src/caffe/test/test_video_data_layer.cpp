@@ -34,7 +34,6 @@ class VideoDataLayerTest : public MultiDeviceTest<TypeParam> {
     std::ofstream outfile(filename_.c_str(), std::ofstream::out);
     LOG(INFO) << "Using temporary file " << filename_;
     for (int i = 0; i < 5; ++i) {
-      //outfile << EXAMPLES_SOURCE_DIR "images/cat.jpg " << i;
       outfile <<
         CMAKE_SOURCE_DIR "caffe/test/test_data/UCF-101_Rowing_g16_c03.avi " <<
         "0 " << i;
@@ -44,8 +43,6 @@ class VideoDataLayerTest : public MultiDeviceTest<TypeParam> {
     MakeTempFilename(&filename_reshape_);
     std::ofstream reshapefile(filename_reshape_.c_str(), std::ofstream::out);
     LOG(INFO) << "Using temporary file " << filename_reshape_;
-    //reshapefile << EXAMPLES_SOURCE_DIR "images/cat.jpg " << 0;
-    //reshapefile << EXAMPLES_SOURCE_DIR "images/fish-bike.jpg " << 1;
     reshapefile <<
         CMAKE_SOURCE_DIR "caffe/test/test_data/UCF-101_Rowing_g16_c03.avi " <<
         "0 0";
@@ -103,15 +100,16 @@ TYPED_TEST(VideoDataLayerTest, TestResize) {
   video_data_param->set_batch_size(5);
   video_data_param->set_source(this->filename_.c_str());
   video_data_param->set_new_length(16);
-  video_data_param->set_new_height(256);
-  video_data_param->set_new_width(256);
+  video_data_param->set_new_height(132);
+  video_data_param->set_new_width(123);
   video_data_param->set_shuffle(false);
   VideoDataLayer<Dtype> layer(param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   EXPECT_EQ(this->blob_top_data_->num(), 5);
   EXPECT_EQ(this->blob_top_data_->channels(), 3);
-  EXPECT_EQ(this->blob_top_data_->height(), 256);
-  EXPECT_EQ(this->blob_top_data_->width(), 256);
+  EXPECT_EQ(this->blob_top_data_->length(), 16);
+  EXPECT_EQ(this->blob_top_data_->height(), 132);
+  EXPECT_EQ(this->blob_top_data_->width(), 123);
   EXPECT_EQ(this->blob_top_label_->num(), 5);
   // Go through the data twice
   for (int iter = 0; iter < 2; ++iter) {
@@ -140,12 +138,14 @@ TYPED_TEST(VideoDataLayerTest, TestReshape) {
   layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
   EXPECT_EQ(this->blob_top_data_->num(), 1);
   EXPECT_EQ(this->blob_top_data_->channels(), 3);
+  EXPECT_EQ(this->blob_top_data_->length(), 16);
   EXPECT_EQ(this->blob_top_data_->height(), 240);
   EXPECT_EQ(this->blob_top_data_->width(), 320);
   //
   layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
   EXPECT_EQ(this->blob_top_data_->num(), 1);
   EXPECT_EQ(this->blob_top_data_->channels(), 3);
+  EXPECT_EQ(this->blob_top_data_->length(), 16);
   EXPECT_EQ(this->blob_top_data_->height(), 240);
   EXPECT_EQ(this->blob_top_data_->width(), 320);
 }

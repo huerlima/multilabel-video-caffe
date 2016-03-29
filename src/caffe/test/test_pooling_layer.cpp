@@ -1215,7 +1215,6 @@ class CudnnNdPoolingLayerTest : public GPUDeviceTest<Dtype> {
   void TestForwardSquare() {
     LayerParameter layer_param;
     PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
-    //pooling_param->set_kernel_size(2);
     pooling_param->mutable_kernel_shape()->add_dim(1);
     pooling_param->mutable_kernel_shape()->add_dim(2);
     pooling_param->mutable_kernel_shape()->add_dim(2);
@@ -1418,8 +1417,6 @@ class CudnnNdPoolingLayerTest : public GPUDeviceTest<Dtype> {
   void TestForwardRectWide() {
     LayerParameter layer_param;
     PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
-    //pooling_param->set_kernel_h(2);
-    //pooling_param->set_kernel_w(3);
     pooling_param->mutable_kernel_shape()->add_dim(1);
     pooling_param->mutable_kernel_shape()->add_dim(2);
     pooling_param->mutable_kernel_shape()->add_dim(3);
@@ -1755,7 +1752,6 @@ TYPED_TEST(CudnnNdPoolingLayerTest, TestSetupCudnnNd3d) {
   vector<int> blob_shape(5);
   const int num = 2;
   const int channels = 2;
-  //this->blob_bottom_->Reshape(num, channels, 1, 6, 5);
   blob_shape[0]=num;
   blob_shape[1]=channels;
   blob_shape[2]=1;

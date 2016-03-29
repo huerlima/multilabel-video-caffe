@@ -15,8 +15,7 @@
 // an extension the std::pair which used to store image filename and
 // its label (int). now, a frame number associated with the video filename
 // is needed (second param) to fully represent a video segment
-struct triplet
-{
+struct triplet {
   std::string first;
   int second, third;
 };

@@ -7,7 +7,7 @@ template <typename Dtype>
 void im2col_nd_cpu(const Dtype* data_im, const int num_spatial_axes,
     const int* im_shape, const int* col_shape,
     const int* kernel_shape, const int* pad, const int* stride,
-    const int* dilation, Dtype* data_col, const bool forced_3d=false);
+    const int* dilation, Dtype* data_col, const bool forced_3d = false);
 
 template <typename Dtype>
 void im2col_cpu(const Dtype* data_im, const int channels,
@@ -20,7 +20,7 @@ template <typename Dtype>
 void col2im_nd_cpu(const Dtype* data_col, const int num_spatial_axes,
     const int* im_shape, const int* col_shape,
     const int* kernel_shape, const int* pad, const int* stride,
-    const int* dilation, Dtype* data_im, const bool forced_3d=false);
+    const int* dilation, Dtype* data_im, const bool forced_3d = false);
 
 template <typename Dtype>
 void col2im_cpu(const Dtype* data_col, const int channels,

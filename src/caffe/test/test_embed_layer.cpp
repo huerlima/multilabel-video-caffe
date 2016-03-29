@@ -47,7 +47,7 @@ TYPED_TEST(EmbedLayerTest, TestSetUp) {
   layer->SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   ASSERT_EQ(this->blob_top_->num_axes(), kInputDim);
   EXPECT_EQ(this->blob_top_->shape(0), 4);
-  for (int i = 1; i < kInputDim - 1; ++ i)
+  for (int i = 1; i < kInputDim - 1; ++i)
     EXPECT_EQ(this->blob_top_->shape(i), 1);
   EXPECT_EQ(this->blob_top_->shape(kInputDim - 1), 10);
 }

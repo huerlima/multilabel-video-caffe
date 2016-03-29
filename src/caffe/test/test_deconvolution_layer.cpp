@@ -113,12 +113,6 @@ TYPED_TEST(DeconvolutionLayerTest, TestSimpleDeconvolution) {
   filler.Fill(this->blob_bottom_2_);
   layer->Forward(this->blob_bottom_vec_, this->blob_top_vec_);
   // simply check that accumulation works with overlapping filters
-  std::cout <<
-    "blob_top_->num()="<<this->blob_top_->num()<<", "<<
-    "blob_top_->channels()="<<this->blob_top_->channels()<<", "<<
-    "blob_top_->height()="<<this->blob_top_->height()<<", "<<
-    "blob_top_->width()="<<this->blob_top_->width()<<", "<<
-    std::endl;
   const Dtype* top_data = this->blob_top_->cpu_data();
   for (int n = 0; n < this->blob_top_->num(); ++n) {
     for (int c = 0; c < this->blob_top_->channels(); ++c) {

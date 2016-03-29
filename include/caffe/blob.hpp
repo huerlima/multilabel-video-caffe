@@ -138,13 +138,14 @@ class Blob {
   inline int channels() const { return LegacyShape(1); }
   /// @brief Deprecated legacy shape accessor length: use shape(2) instead.
   inline int length() const { return (num_axes() == 5) ? LegacyShape(2) : 1; }
-  //inline int length() const { return LegacyShape(2); }
   /// @brief Deprecated legacy shape accessor height: use shape(3) instead.
-  inline int height() const { return (num_axes() == 5) ? LegacyShape(3) : LegacyShape(2); }
-  //inline int height() const { return LegacyShape(3); }
+  inline int height() const {
+    return (num_axes() == 5) ? LegacyShape(3) : LegacyShape(2);
+  }
   /// @brief Deprecated legacy shape accessor width: use shape(4) instead.
-  inline int width() const { return (num_axes() == 5) ? LegacyShape(4) : LegacyShape(3); }
-  //inline int width() const { return LegacyShape(4); }
+  inline int width() const {
+    return (num_axes() == 5) ? LegacyShape(4) : LegacyShape(3);
+  }
   inline int LegacyShape(int index) const {
     CHECK_LE(num_axes(), 5)
         << "Cannot use legacy accessors on Blobs with > 5 axes.";

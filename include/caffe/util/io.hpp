@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <iostream>  // NOLINT(readability/streams)
 #include <string>
+#include <vector>
 
 #include "google/protobuf/message.h"
 

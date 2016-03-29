@@ -10,6 +10,10 @@
 #endif  // USE_OPENCV
 #include <stdint.h>
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <algorithm>
 #include <fstream>  // NOLINT(readability/streams)
 #include <string>
@@ -19,16 +23,12 @@
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/io.hpp"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 // Check if a given path is a regular file or a path
-void check_path(const std::string& path, bool& is_file, bool& is_dir)
-{
+void check_path(const std::string& path, bool* is_file, bool* is_dir) {
   struct stat path_stat;
   stat(path.c_str(), &path_stat);
-  is_file =  S_ISREG(path_stat.st_mode);
-  is_dir  =  S_ISDIR(path_stat.st_mode);
+  *is_file = S_ISREG(path_stat.st_mode);
+  *is_dir  = S_ISDIR(path_stat.st_mode);
 }
 
 const int kProtoReadBytesLimit = INT_MAX;  // Max size of 2 GB minus 1 byte.
@@ -160,7 +160,7 @@ bool ReadVideoToCVMat(const string& path,
   // Check if path is a directory that holds extracted images from a video,
   // or a regular video file.
   bool is_video_file, is_path;
-  check_path(path, is_video_file, is_path);
+  check_path(path, &is_video_file, &is_path);
   if (!is_video_file && !is_path) {
     LOG(ERROR) << "Could not open or find file " << path;
     return false;
@@ -173,9 +173,9 @@ bool ReadVideoToCVMat(const string& path,
     cv::VideoCapture cap;
     cap.open(path);
 
-	if (!cap.isOpened()){
-		LOG(ERROR) << "Cannot open a video file=" << path;
-		return false;
+    if (!cap.isOpened()) {
+      LOG(ERROR) << "Cannot open a video file=" << path;
+      return false;
     }
 
     int num_frames = cap.get(CV_CAP_PROP_FRAME_COUNT);
@@ -189,7 +189,6 @@ bool ReadVideoToCVMat(const string& path,
 
     cap.set(CV_CAP_PROP_POS_FRAMES, start_frame);
     for (size_t i = start_frame; i <= end_frame; ++i) {
-      //cap.set(CV_CAP_PROP_POS_FRAMES, i);
       cap.read(cv_img_origin);
       if (!cv_img_origin.data) {
         LOG(ERROR) << "Could not read frame=" << i <<
@@ -200,9 +199,8 @@ bool ReadVideoToCVMat(const string& path,
       // Force color
       if (is_color && cv_img_origin.channels() == 1) {
         cv::cvtColor(cv_img_origin, cv_img_origin, CV_GRAY2BGR);
-      }
       // Force grayscale
-      else if (!is_color && cv_img_origin.channels() == 3) {
+      } else if (!is_color && cv_img_origin.channels() == 3) {
         cv::cvtColor(cv_img_origin, cv_img_origin, CV_BGR2GRAY);
       }
 
@@ -212,11 +210,12 @@ bool ReadVideoToCVMat(const string& path,
         cv_img = cv_img_origin;
       }
       cv_imgs->push_back(cv_img.clone());
+      cv_img_origin.release();
     }
-  }
+    cap.release();
 
   // In case of a directory with extracted frames within
-  else {
+  } else {
     int cv_read_flag = (is_color ? CV_LOAD_IMAGE_COLOR :
       CV_LOAD_IMAGE_GRAYSCALE);
 
@@ -225,11 +224,9 @@ bool ReadVideoToCVMat(const string& path,
     char image_filename[256];
 
     for (int i = start_frame; i <= end_frame; ++i) {
-      //sprintf(image_filename, "%s/%06d.jpg", path.c_str(), i);
-      sprintf(image_filename, "%s/image_%04d.jpg", path.c_str(), i);
+      snprintf(image_filename, sizeof(image_filename), "%s/image_%04d.jpg",
+               path.c_str(), i);
       cv_img_origin = cv::imread(image_filename, cv_read_flag);
-      //LOG(INFO) << "i=" << i << ", cv_img_origin.at<uchar>(10,10)=" << (int) cv_img_origin.at<uchar>(10,10);
-      //LOG(INFO)<<"Reading i="<<i<<", name="<<image_filename;
       if (!cv_img_origin.data) {
         LOG(ERROR) << "Could not read frame=" << i <<
                       " from an image file=" << image_filename;
@@ -242,6 +239,7 @@ bool ReadVideoToCVMat(const string& path,
         cv_img = cv_img_origin;
       }
       cv_imgs->push_back(cv_img.clone());
+      cv_img_origin.release();
     }
   }
   return true;

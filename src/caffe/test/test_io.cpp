@@ -5,6 +5,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <string>
+#include <vector>
 
 #include "gtest/gtest.h"
 
@@ -425,11 +426,11 @@ TEST_F(IOTest, TestReadVideoToCVMatBasic) {
                 "caffe/test/test_data/youtube_objects_dog_v0002_s006";
   std::vector<cv::Mat> cv_imgs;
   bool read_video_result = ReadVideoToCVMat(path,
-                                            1,    // start frame
-                                            16,   // length (# frames)
-                                            0,    // new height
-                                            0,    // new width
-                                            true, // load as color
+                                            1,     // start frame
+                                            16,    // length (# frames)
+                                            0,     // new height
+                                            0,     // new width
+                                            true,  // load as color
                                             &cv_imgs);
   EXPECT_EQ(read_video_result, true);
   EXPECT_EQ(cv_imgs.size(), 16);
@@ -443,13 +444,13 @@ TEST_F(IOTest, TestReadVideoToCVMatNotEnoughFrames) {
                 "caffe/test/test_data/youtube_objects_dog_v0002_s006";
   std::vector<cv::Mat> cv_imgs;
   bool read_video_result = ReadVideoToCVMat(path,
-                                            40,    // start frame
-                                            16,   // length (# frames)
-                                            0,    // new height
-                                            0,    // new width
-                                            true, // load as color
+                                            2,     // start frame
+                                            16,    // length (# frames)
+                                            0,     // new height
+                                            0,     // new width
+                                            true,  // load as color
                                             &cv_imgs);
-  EXPECT_EQ(read_video_result, false); // because there are only 48 frames
+  EXPECT_EQ(read_video_result, false);   // because there are only 16 frames
 }
 
 TEST_F(IOTest, TestReadVideoToCVMatResize) {
@@ -457,11 +458,11 @@ TEST_F(IOTest, TestReadVideoToCVMatResize) {
                 "caffe/test/test_data/youtube_objects_dog_v0002_s006";
   std::vector<cv::Mat> cv_imgs;
   bool read_video_result = ReadVideoToCVMat(path,
-                                            1,    // start frame
-                                            16,   // length (# frames)
-                                            80,  // new height
-                                            100,  // new width
-                                            true, // load as color
+                                            1,     // start frame
+                                            16,    // length (# frames)
+                                            80,    // new height
+                                            100,   // new width
+                                            true,  // load as color
                                             &cv_imgs);
   EXPECT_EQ(read_video_result, true);
   EXPECT_EQ(cv_imgs.size(), 16);
@@ -475,11 +476,11 @@ TEST_F(IOTest, TestReadVideoToCVMatFromAviBasic) {
                 "caffe/test/test_data/UCF-101_Rowing_g16_c03.avi";
   std::vector<cv::Mat> cv_imgs;
   bool read_video_result = ReadVideoToCVMat(path,
-                                            1,    // start frame
-                                            19,   // length (# frames)
-                                            0,    // new height
-                                            0,    // new width
-                                            true, // load as color
+                                            1,     // start frame
+                                            19,    // length (# frames)
+                                            0,     // new height
+                                            0,     // new width
+                                            true,  // load as color
                                             &cv_imgs);
   EXPECT_EQ(read_video_result, true);
   EXPECT_EQ(cv_imgs.size(), 19);
@@ -493,11 +494,11 @@ TEST_F(IOTest, TestReadVideoToCVMatFromAviResize) {
                 "caffe/test/test_data/UCF-101_Rowing_g16_c03.avi";
   std::vector<cv::Mat> cv_imgs;
   bool read_video_result = ReadVideoToCVMat(path,
-                                            1,    // start frame
-                                            19,   // length (# frames)
+                                            1,      // start frame
+                                            19,     // length (# frames)
                                             123,    // new height
                                             300,    // new width
-                                            true, // load as color
+                                            true,   // load as color
                                             &cv_imgs);
   EXPECT_EQ(read_video_result, true);
   EXPECT_EQ(cv_imgs.size(), 19);
@@ -511,11 +512,11 @@ TEST_F(IOTest, TestReadVideoToCVMatFromAviResizeAndGrayscale) {
                 "caffe/test/test_data/UCF-101_Rowing_g16_c03.avi";
   std::vector<cv::Mat> cv_imgs;
   bool read_video_result = ReadVideoToCVMat(path,
-                                            1,    // start frame
-                                            16,   // length (# frames)
-                                            80,    // new height
+                                            1,      // start frame
+                                            16,     // length (# frames)
+                                            80,     // new height
                                             100,    // new width
-                                            false, // load as color
+                                            false,  // load as color
                                             &cv_imgs);
   EXPECT_EQ(read_video_result, true);
   EXPECT_EQ(cv_imgs.size(), 16);

@@ -18,10 +18,8 @@ void Im2colLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     forced_3d_ = true;
   else
     forced_3d_ = false;
-  //std::cout << "forced_3d_=" << forced_3d_ << std::endl;
   const int first_spatial_dim = channel_axis_ + 1 + forced_3d_;
   num_spatial_axes_ = input_num_dims - first_spatial_dim;
-  //std::cout << "num_spatial_axes_=" << num_spatial_axes_ << std::endl;
   CHECK_GE(num_spatial_axes_, 1);
   vector<int> dim_blob_shape(1, num_spatial_axes_);
   // Setup filter kernel dimensions (kernel_shape_).
@@ -128,11 +126,6 @@ void Im2colLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
         / stride_data[i] + 1;
     top_shape[channel_axis_ + i + 1 + forced_3d_] = output_dim;
   }
-  //{
-  //std::cout << "----------------------" << std::endl;
-  //for (int i=0; i<top_shape.size(); ++i)
-  //  std::cout << "top_shape["<<i<<"]="<<top_shape[i]<<std::endl;
-  //}
   top[0]->Reshape(top_shape);
   num_ = bottom[0]->count(0, channel_axis_);
   bottom_dim_ = bottom[0]->count(channel_axis_);
