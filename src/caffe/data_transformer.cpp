@@ -213,7 +213,7 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
     const int length = transformed_blob->shape(2);
     const int height = transformed_blob->shape(3);
     const int width = transformed_blob->shape(4);
-    bool c3d_mean_subtraction_applied;
+    bool mean_cube_subtracted = false;
 
     // if mean cube file is given, 3d mean cube should be subtracted at this
     // level
@@ -225,15 +225,17 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
       CHECK_EQ(mat_vector[0].rows, data_mean_.height());
       CHECK_EQ(mat_vector[0].cols, data_mean_.width());
       mean = data_mean_.mutable_cpu_data();
-      if (1 != length && length == data_mean_.length()) {
-        c3d_mean_subtraction_applied = true;
+      if ((1 != length) && (length == data_mean_.length())) {
+        mean_cube_subtracted = true;
       } else {
-        CHECK_EQ(1, data_mean_.channels()); // will be applied later
-        c3d_mean_subtraction_applied = false;
+        CHECK_EQ(1, data_mean_.length());  // will be applied later
       }
-    } else {
-      c3d_mean_subtraction_applied = false;
     }
+
+    // mirroring and random cropping should not be done on each image
+    // individually as images come from a same video clip
+    rng_seed_ = caffe_rng_rand();
+
     CHECK_GT(mat_num, 0) << "There is no MAT to add";
     CHECK_EQ(num, 1) << "First dimension (batch number) must be 1";
     CHECK_EQ(mat_num, length) <<
@@ -248,16 +250,16 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
     vector<int> indices(5);
     for (int item_id = 0; item_id < mat_num; ++item_id) {
       cv::Mat cv_img = mat_vector[item_id].clone();
-      CHECK(mat_vector[item_id].depth() == CV_8U) << "Image data type must be unsigned byte";
+      CHECK(mat_vector[item_id].depth() == CV_8U) << "Image data type must " <<
+        "be unsigned byte";
 
       // mean cube subtraction for C3D data
-      if (c3d_mean_subtraction_applied) {
+      if (mean_cube_subtracted) {
         for (int c = 0; c < cv_img.channels(); ++c) {
           for (int h = 0; h < cv_img.rows; ++h) {
             for (int w = 0; w < cv_img.cols; ++w) {
-              int mean_index = ((c * length + item_id) * height + h) * width + w;
-              //LOG(INFO) << "h="<<h<<", w="<<w<<", c="<<c<<"mean_index="<<mean_index;
-              //LOG(INFO) << "mean[]="<< mean[mean_index];
+              int mean_index = ((c * length + item_id) * height + h) * width
+                                 + w;
               cv_img.at<cv::Vec3b>(h, w)[c] -= mean[mean_index];
             }
           }
@@ -271,7 +273,8 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
       indices[4] = 0;
       int offset = transformed_blob->offset(indices);
       uni_blob.set_cpu_data(transformed_blob->mutable_cpu_data() + offset);
-      Transform(cv_img, &uni_blob, c3d_mean_subtraction_applied);
+
+      Transform(cv_img, &uni_blob, mean_cube_subtracted, true);
     }
   } else {
     const int mat_num = mat_vector.size();
@@ -295,7 +298,8 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
                                        Blob<Dtype>* transformed_blob,
-                                       const bool force_no_mean) {
+                                       const bool force_no_mean,
+                                       const bool is_video) {
   const int crop_size = param_.crop_size();
   const int img_channels = cv_img.channels();
   const int img_height = cv_img.rows;
@@ -340,6 +344,11 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
       }
     }
   }
+
+  // For videos, re-use random seed to replicate randomness
+  // (e.g. same croppings, mirrorings)
+  if (is_video)
+    SetRandFromSeed(rng_seed_);
 
   int h_off = 0;
   int w_off = 0;
@@ -586,9 +595,9 @@ vector<int> DataTransformer<Dtype>::InferBlobShape(
     vector<int> tmp_shape = InferBlobShape(mat_vector, false);
     CHECK_EQ(tmp_shape.size(), 4) << "A mat_vector must be 4-dimensional";
     vector<int> shape(5);
-    shape[0] = 1;            // num of batches
-    shape[1] = tmp_shape[1]; // num of channels
-    shape[2] = num; // this is actually "length" or "depth" of C3D blob
+    shape[0] = 1;             // num of batches
+    shape[1] = tmp_shape[1];  // num of channels
+    shape[2] = num;           // this is actually "length" of C3D blob
     shape[3] = tmp_shape[2];
     shape[4] = tmp_shape[3];
     return shape;
@@ -615,6 +624,11 @@ void DataTransformer<Dtype>::InitRand() {
   } else {
     rng_.reset();
   }
+}
+
+template <typename Dtype>
+void DataTransformer<Dtype>::SetRandFromSeed(const unsigned int rng_seed) {
+  rng_.reset(new Caffe::RNG(rng_seed));
 }
 
 template <typename Dtype>
