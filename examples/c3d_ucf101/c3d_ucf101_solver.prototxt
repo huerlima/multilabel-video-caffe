@@ -1,8 +1,14 @@
 net: "examples/c3d_ucf101/c3d_ucf101_train_test.prototxt"
+
 # num test samples / batch_size = 41822./30 = 1394.07
-test_iter: 1394
+#test_iter: 1394
+# no need to fully cover all test samples if they are shuffled
+test_iter: 200
+test_state: { stage: 'test-on-train' }
+test_iter: 200
+test_state: { stage: 'test-on-val' }
 test_interval: 1000
-base_lr: 0.0001
+base_lr: 0.003
 momentum: 0.9
 weight_decay: 0.005
 lr_policy: "step"

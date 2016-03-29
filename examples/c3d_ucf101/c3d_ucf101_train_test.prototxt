@@ -1,6 +1,7 @@
 name: "c3d_ucf101"
 
 # ----- video/label input -----
+# ----- for training
 layer {
   name: "data"
   type: "VideoData"
@@ -9,9 +10,9 @@ layer {
   video_data_param {
     source: "examples/c3d_ucf101/c3d_ucf101_train_split1.txt"
     batch_size: 30
-    new_length: 16
     new_height: 128
     new_width: 171
+    new_length: 16
     shuffle: true
   }
   include {
@@ -20,10 +21,31 @@ layer {
   transform_param {
     crop_size: 112
     mirror: true
-    #mean_file: "examples/c3d_ucf101/train01_16_128_171_mean.binaryproto"
-    mean_value: 104
-    mean_value: 117
-    mean_value: 123
+    mean_file: "examples/c3d_ucf101/ucf101_train_mean.binaryproto"
+  }
+}
+# ----- for validation
+layer {
+  name: "data"
+  type: "VideoData"
+  top: "data"
+  top: "label"
+  video_data_param {
+    source: "examples/c3d_ucf101/c3d_ucf101_train_split1.txt"
+    batch_size: 10
+    new_height: 128
+    new_width: 171
+    new_length: 16
+    shuffle: true
+  }
+  include {
+    phase: TEST
+    stage: "test-on-train"
+  }
+  transform_param {
+    crop_size: 112
+    mirror: false
+    mean_file: "examples/c3d_ucf101/ucf101_train_mean.binaryproto"
   }
 }
 layer {
@@ -33,22 +55,20 @@ layer {
   top: "label"
   video_data_param {
     source: "examples/c3d_ucf101/c3d_ucf101_test_split1.txt"
-    batch_size: 30
-    new_length: 16
+    batch_size: 10
     new_height: 128
     new_width: 171
-    shuffle: false
+    new_length: 16
+    shuffle: true
   }
   include {
     phase: TEST
+    stage: "test-on-val"
   }
   transform_param {
     crop_size: 112
     mirror: false
-    #mean_file: "examples/c3d_ucf101/train01_16_128_171_mean.binaryproto"
-    mean_value: 104
-    mean_value: 117
-    mean_value: 123
+    mean_file: "examples/c3d_ucf101/ucf101_train_mean.binaryproto"
   }
 }
 
@@ -60,9 +80,11 @@ layer {
   top: "conv1a"
   param {
     lr_mult: 1
+    decay_mult: 1
   }
   param {
     lr_mult: 2
+    decay_mult: 0
   }
   convolution_param {
     num_output: 64
@@ -70,10 +92,12 @@ layer {
     stride_shape { dim: 1 dim: 1 dim: 1 }
     pad_shape    { dim: 1 dim: 1 dim: 1 }
     weight_filler {
-      type: "xavier"
+      type: "gaussian"
+      std: 0.01
     }
     bias_filler {
       type: "constant"
+      value: 0
     }
   }
 }
@@ -103,9 +127,11 @@ layer {
   top: "conv2a"
   param {
     lr_mult: 1
+    decay_mult: 1
   }
   param {
     lr_mult: 2
+    decay_mult: 0
   }
   convolution_param {
     num_output: 128
@@ -113,10 +139,12 @@ layer {
     stride_shape { dim: 1 dim: 1 dim: 1 }
     pad_shape    { dim: 1 dim: 1 dim: 1 }
     weight_filler {
-      type: "xavier"
+      type: "gaussian"
+      std: 0.01
     }
     bias_filler {
       type: "constant"
+      value: 1
     }
   }
 }
@@ -146,9 +174,11 @@ layer {
   top: "conv3a"
   param {
     lr_mult: 1
+    decay_mult: 1
   }
   param {
     lr_mult: 2
+    decay_mult: 0
   }
   convolution_param {
     num_output: 256
@@ -156,10 +186,12 @@ layer {
     stride_shape { dim: 1 dim: 1 dim: 1 }
     pad_shape    { dim: 1 dim: 1 dim: 1 }
     weight_filler {
-      type: "xavier"
+      type: "gaussian"
+      std: 0.01
     }
     bias_filler {
       type: "constant"
+      value: 1
     }
   }
 }
@@ -189,9 +221,11 @@ layer {
   top: "conv4a"
   param {
     lr_mult: 1
+    decay_mult: 1
   }
   param {
     lr_mult: 2
+    decay_mult: 0
   }
   convolution_param {
     num_output: 256
@@ -199,10 +233,12 @@ layer {
     stride_shape { dim: 1 dim: 1 dim: 1 }
     pad_shape    { dim: 1 dim: 1 dim: 1 }
     weight_filler {
-      type: "xavier"
+      type: "gaussian"
+      std: 0.01
     }
     bias_filler {
       type: "constant"
+      value: 1
     }
   }
 }
@@ -232,9 +268,11 @@ layer {
   top: "conv5a"
   param {
     lr_mult: 1
+    decay_mult: 1
   }
   param {
     lr_mult: 2
+    decay_mult: 0
   }
   convolution_param {
     num_output: 256
@@ -242,10 +280,12 @@ layer {
     stride_shape { dim: 1 dim: 1 dim: 1 }
     pad_shape    { dim: 1 dim: 1 dim: 1 }
     weight_filler {
-      type: "xavier"
+      type: "gaussian"
+      std: 0.01
     }
     bias_filler {
       type: "constant"
+      value: 1
     }
   }
 }
@@ -275,17 +315,21 @@ layer {
   top: "fc6"
   param {
     lr_mult: 1
+    decay_mult: 1
   }
   param {
     lr_mult: 2
+    decay_mult: 0
   }
   inner_product_param {
     num_output: 2048
     weight_filler {
-      type: "xavier"
+      type: "gaussian"
+      std: 0.005
     }
     bias_filler {
       type: "constant"
+      value: 1
     }
   }
 }
@@ -313,17 +357,21 @@ layer {
   top: "fc7"
   param {
     lr_mult: 1
+    decay_mult: 1
   }
   param {
     lr_mult: 2
+    decay_mult: 0
   }
   inner_product_param {
     num_output: 2048
     weight_filler {
-      type: "xavier"
+      type: "gaussian"
+      std: 0.005
     }
     bias_filler {
       type: "constant"
+      value: 1
     }
   }
 }
@@ -351,24 +399,37 @@ layer {
   top: "fc8"
   param {
     lr_mult: 1
+    decay_mult: 1
   }
   param {
     lr_mult: 2
+    decay_mult: 0
   }
   inner_product_param {
     num_output: 101
     weight_filler {
-      type: "xavier"
+      type: "gaussian"
+      std: 0.01
     }
     bias_filler {
       type: "constant"
+      value: 0
     }
+  }
+}
+layer {
+  name: "prob"
+  type: "Softmax"
+  bottom: "fc8"
+  top: "prob"
+  include {
+    phase: TEST
   }
 }
 layer {
   name: "accuracy"
   type: "Accuracy"
-  bottom: "fc8"
+  bottom: "prob"
   bottom: "label"
   top: "accuracy/top-1"
   include {
@@ -378,7 +439,7 @@ layer {
 layer {
   name: "accuracy"
   type: "Accuracy"
-  bottom: "fc8"
+  bottom: "prob"
   bottom: "label"
   top: "accuracy/top-5"
   include {
