@@ -4,10 +4,13 @@
 #include <google/protobuf/text_format.h>
 #ifdef USE_OPENCV
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/version.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/highgui/highgui_c.h>
 #include <opencv2/imgproc/imgproc.hpp>
+#if CV_MAJOR_VERSION == 3
 #include <opencv2/videoio/videoio.hpp>
+#endif
 #endif  // USE_OPENCV
 #include <stdint.h>
 
@@ -179,22 +182,27 @@ bool ReadVideoToCVMat(const string& path,
       return false;
     }
 
-    int num_frames = cap.get(CV_CAP_PROP_FRAME_COUNT);
+    int num_frames = cap.get(CV_CAP_PROP_FRAME_COUNT) + 1;
     int end_frame = start_frame + length - 1;
     if (num_frames < end_frame) {
       LOG(ERROR) << "not enough frames; num_frames=" << num_frames <<
-                    "start_frame=" << start_frame <<
-                    "length=" << length;
+                    ", start_frame=" << start_frame <<
+                    ", length=" << length;
       return false;
     }
 
-    cap.set(CV_CAP_PROP_POS_FRAMES, start_frame);
+    // CV_CAP_PROP_POS_FRAMES is 0-based whereas start_frame is 1-based
+    cap.set(CV_CAP_PROP_POS_FRAMES, start_frame - 2);
     for (size_t i = start_frame; i <= end_frame; ++i) {
       cap.read(cv_img_origin);
       if (!cv_img_origin.data) {
-        LOG(ERROR) << "Could not read frame=" << i <<
-                      "from a video file=" << path;
-        return false;
+        LOG(INFO) << "Could not read frame=" << i <<
+                      " from a video file=" << path <<
+                      ", where num of frames=" << num_frames <<
+                      ". Use previous frame.";
+        cv_imgs->push_back(cv_img.clone());
+        cv_img_origin.release();
+        continue;
       }
 
       // Force color
