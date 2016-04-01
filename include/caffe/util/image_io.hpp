@@ -11,11 +11,13 @@ using std::string;
 namespace caffe {
 
 template <typename Dtype>
-bool save_blob_to_binary(Blob<Dtype>* blob, const string fn_blob, int num_index);
+bool save_blob_to_binary(Blob<Dtype>* blob,
+    const string fn_blob, int num_index);
 
 template <typename Dtype>
-inline bool save_blob_to_binary(Blob<Dtype>* blob, const string fn_blob){
-	return save_blob_to_binary(blob, fn_blob, -1);
+inline bool save_blob_to_binary(Blob<Dtype>* blob,
+    const string fn_blob) {
+    return save_blob_to_binary(blob, fn_blob, -1);
 }
 
 
