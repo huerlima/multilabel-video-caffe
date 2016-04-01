@@ -1,8 +1,8 @@
 #include <stdio.h>  // for snprintf
 // #include <cuda_runtime.h>
 
-#include <fstream>
-#include <iostream>
+#include <fstream>  // NOLINT(readability/streams)
+#include <iostream>  // NOLINT(readability/streams)
 #include <string>
 #include <vector>
 
@@ -32,7 +32,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
   uint num_mini_batches = atoi(argv[5]);
   char* fn_feat = argv[6];
 
-  //Caffe::set_phase(Caffe::TEST);
+  // Caffe::set_phase(Caffe::TEST);
   if (device_id >= 0) {
       Caffe::set_mode(Caffe::GPU);
       Caffe::SetDevice(device_id);
@@ -56,7 +56,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
   std::ifstream infile(fn_feat);
   string feat_prefix;
   std::vector<string> list_prefix;
-  //int c = 0;
+  // int c = 0;
 
   vector<Blob<float>*> input_vec;
   int image_index = 0;
