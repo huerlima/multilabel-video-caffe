@@ -1286,6 +1286,382 @@ class CudnnNdPoolingLayerTest : public GPUDeviceTest<Dtype> {
     }
   }
 
+  // Test for 3-D 2x2x2 square cube pooling layer
+  void TestForwardCube() {
+    LayerParameter layer_param;
+    PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+    pooling_param->mutable_kernel_shape()->add_dim(2);
+    pooling_param->mutable_kernel_shape()->add_dim(2);
+    pooling_param->mutable_kernel_shape()->add_dim(2);
+    pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
+    const int num = 2;
+    const int channels = 2;
+    const int length = 2;
+    blob_bottom_->Reshape(num, channels, length, 3, 5);
+    // Input: 2 x 2 channels of:
+    // l=0 [1 2 5 2 3] l=1 [0 1 4 1 2]
+    //     [9 4 1 4 8]     [8 3 0 3 7]
+    //     [1 2 5 2 9]     [0 1 4 1 8]
+    for (int i = 0; i < 15 * num * channels * length; i += 30) {
+      blob_bottom_->mutable_cpu_data()[i +  0] = 1;
+      blob_bottom_->mutable_cpu_data()[i +  1] = 2;
+      blob_bottom_->mutable_cpu_data()[i +  2] = 5;
+      blob_bottom_->mutable_cpu_data()[i +  3] = 2;
+      blob_bottom_->mutable_cpu_data()[i +  4] = 3;
+      blob_bottom_->mutable_cpu_data()[i +  5] = 9;
+      blob_bottom_->mutable_cpu_data()[i +  6] = 4;
+      blob_bottom_->mutable_cpu_data()[i +  7] = 1;
+      blob_bottom_->mutable_cpu_data()[i +  8] = 4;
+      blob_bottom_->mutable_cpu_data()[i +  9] = 8;
+      blob_bottom_->mutable_cpu_data()[i + 10] = 1;
+      blob_bottom_->mutable_cpu_data()[i + 11] = 2;
+      blob_bottom_->mutable_cpu_data()[i + 12] = 5;
+      blob_bottom_->mutable_cpu_data()[i + 13] = 2;
+      blob_bottom_->mutable_cpu_data()[i + 14] = 9;
+
+      blob_bottom_->mutable_cpu_data()[i + 15] = 0;
+      blob_bottom_->mutable_cpu_data()[i + 16] = 1;
+      blob_bottom_->mutable_cpu_data()[i + 17] = 4;
+      blob_bottom_->mutable_cpu_data()[i + 18] = 1;
+      blob_bottom_->mutable_cpu_data()[i + 19] = 2;
+      blob_bottom_->mutable_cpu_data()[i + 20] = 8;
+      blob_bottom_->mutable_cpu_data()[i + 21] = 3;
+      blob_bottom_->mutable_cpu_data()[i + 22] = 0;
+      blob_bottom_->mutable_cpu_data()[i + 23] = 3;
+      blob_bottom_->mutable_cpu_data()[i + 24] = 7;
+      blob_bottom_->mutable_cpu_data()[i + 25] = 0;
+      blob_bottom_->mutable_cpu_data()[i + 26] = 1;
+      blob_bottom_->mutable_cpu_data()[i + 27] = 4;
+      blob_bottom_->mutable_cpu_data()[i + 28] = 1;
+      blob_bottom_->mutable_cpu_data()[i + 29] = 8;
+    }
+    CudnnNdPoolingLayer<Dtype> layer(layer_param);
+    layer.SetUp(blob_bottom_vec_, blob_top_vec_);
+    EXPECT_EQ(blob_top_->num(), num);
+    EXPECT_EQ(blob_top_->channels(), channels);
+    EXPECT_EQ(blob_top_->length(), 1);
+    EXPECT_EQ(blob_top_->height(), 2);
+    EXPECT_EQ(blob_top_->width(), 4);
+    if (blob_top_vec_.size() > 1) {
+      EXPECT_EQ(blob_top_mask_->num(), num);
+      EXPECT_EQ(blob_top_mask_->channels(), channels);
+      EXPECT_EQ(blob_top_mask_->length(), 1);
+      EXPECT_EQ(blob_top_mask_->height(), 2);
+      EXPECT_EQ(blob_top_mask_->width(), 4);
+    }
+    layer.Forward(blob_bottom_vec_, blob_top_vec_);
+    // Expected output: 2 x 2 channels of:
+    //     [9 5 5 8]
+    //     [9 5 5 9]
+    for (int i = 0; i < 8 * num * channels; i += 8) {
+      EXPECT_EQ(blob_top_->cpu_data()[i + 0], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 1], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 2], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 3], 8);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 4], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 5], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 6], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 7], 9);
+    }
+    if (blob_top_vec_.size() > 1) {
+      // Expected mask output: 2 x 2 channels of:
+      //     [5  2  2  9]
+      //     [5 12 12 14]
+      for (int i = 0; i < 8 * num * channels; i += 8) {
+        EXPECT_EQ(blob_top_mask_->cpu_data()[i + 0],  5);
+        EXPECT_EQ(blob_top_mask_->cpu_data()[i + 1],  2);
+        EXPECT_EQ(blob_top_mask_->cpu_data()[i + 2],  2);
+        EXPECT_EQ(blob_top_mask_->cpu_data()[i + 3],  9);
+        EXPECT_EQ(blob_top_mask_->cpu_data()[i + 4],  5);
+        EXPECT_EQ(blob_top_mask_->cpu_data()[i + 5], 12);
+        EXPECT_EQ(blob_top_mask_->cpu_data()[i + 6], 12);
+        EXPECT_EQ(blob_top_mask_->cpu_data()[i + 7], 14);
+      }
+    }
+  }
+
+  // More elaborate test for 3-D 2x2x2 square cube pooling layer
+  void TestForwardCube2() {
+    LayerParameter layer_param;
+    PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+    pooling_param->mutable_kernel_shape()->add_dim(2);
+    pooling_param->mutable_kernel_shape()->add_dim(2);
+    pooling_param->mutable_kernel_shape()->add_dim(2);
+    pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
+    const int num = 2;
+    const int channels = 2;
+    const int length = 3;
+    blob_bottom_->Reshape(num, channels, length, 3, 3);
+    // Input: 2 x 2 channels of:
+    // l=0 [1 2 5] l=1 [3 1 2] l=2 [3 3 5]
+    //     [9 4 1]     [4 5 1]     [2 4 6]
+    //     [1 2 5]     [3 1 4]     [4 1 7]
+    for (int i = 0; i < 15 * num * channels * length; i += 27) {
+      blob_bottom_->mutable_cpu_data()[i +  0] = 1;
+      blob_bottom_->mutable_cpu_data()[i +  1] = 2;
+      blob_bottom_->mutable_cpu_data()[i +  2] = 5;
+      blob_bottom_->mutable_cpu_data()[i +  3] = 9;
+      blob_bottom_->mutable_cpu_data()[i +  4] = 4;
+      blob_bottom_->mutable_cpu_data()[i +  5] = 1;
+      blob_bottom_->mutable_cpu_data()[i +  6] = 1;
+      blob_bottom_->mutable_cpu_data()[i +  7] = 2;
+      blob_bottom_->mutable_cpu_data()[i +  8] = 5;
+
+      blob_bottom_->mutable_cpu_data()[i +  9] = 3;
+      blob_bottom_->mutable_cpu_data()[i + 10] = 1;
+      blob_bottom_->mutable_cpu_data()[i + 11] = 2;
+      blob_bottom_->mutable_cpu_data()[i + 12] = 4;
+      blob_bottom_->mutable_cpu_data()[i + 13] = 5;
+      blob_bottom_->mutable_cpu_data()[i + 14] = 1;
+      blob_bottom_->mutable_cpu_data()[i + 15] = 3;
+      blob_bottom_->mutable_cpu_data()[i + 16] = 1;
+      blob_bottom_->mutable_cpu_data()[i + 17] = 4;
+
+      blob_bottom_->mutable_cpu_data()[i + 18] = 3;
+      blob_bottom_->mutable_cpu_data()[i + 19] = 3;
+      blob_bottom_->mutable_cpu_data()[i + 20] = 5;
+      blob_bottom_->mutable_cpu_data()[i + 21] = 2;
+      blob_bottom_->mutable_cpu_data()[i + 22] = 4;
+      blob_bottom_->mutable_cpu_data()[i + 23] = 6;
+      blob_bottom_->mutable_cpu_data()[i + 24] = 4;
+      blob_bottom_->mutable_cpu_data()[i + 25] = 1;
+      blob_bottom_->mutable_cpu_data()[i + 26] = 7;
+    }
+    CudnnNdPoolingLayer<Dtype> layer(layer_param);
+    layer.SetUp(blob_bottom_vec_, blob_top_vec_);
+    EXPECT_EQ(blob_top_->num(), num);
+    EXPECT_EQ(blob_top_->channels(), channels);
+    EXPECT_EQ(blob_top_->length(), 2);
+    EXPECT_EQ(blob_top_->height(), 2);
+    EXPECT_EQ(blob_top_->width(), 2);
+    if (blob_top_vec_.size() > 1) {
+      EXPECT_EQ(blob_top_mask_->num(), num);
+      EXPECT_EQ(blob_top_mask_->channels(), channels);
+      EXPECT_EQ(blob_top_mask_->length(), 2);
+      EXPECT_EQ(blob_top_mask_->height(), 2);
+      EXPECT_EQ(blob_top_mask_->width(), 2);
+    }
+    layer.Forward(blob_bottom_vec_, blob_top_vec_);
+    // Expected output: 2 x 2 x 2 channels of:
+    // l=0 [9 5] [5 6]
+    //     [9 5] [5 7]
+
+    // l=0 [1 2 5] l=1 [3 1 2] l=2 [3 3 5]
+    //     [9 4 1]     [4 5 1]     [2 4 6]
+    //     [1 2 5]     [3 1 4]     [4 1 7]
+    for (int i = 0; i < 8 * num * channels; i += 8) {
+      EXPECT_EQ(blob_top_->cpu_data()[i + 0], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 1], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 2], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 3], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 4], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 5], 6);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 6], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 7], 7);
+    }
+  }
+
+  // More elaborate test for 3-D 2x2x2 square cube pooling layer with nontrivial
+  // padding
+  void TestForwardCube3() {
+    LayerParameter layer_param;
+    PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+    pooling_param->mutable_kernel_shape()->add_dim(2);
+    pooling_param->mutable_kernel_shape()->add_dim(2);
+    pooling_param->mutable_kernel_shape()->add_dim(2);
+    pooling_param->mutable_pad_shape()->add_dim(1);
+    pooling_param->mutable_pad_shape()->add_dim(1);
+    pooling_param->mutable_pad_shape()->add_dim(1);
+    pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
+    const int num = 2;
+    const int channels = 2;
+    const int length = 3;
+    blob_bottom_->Reshape(num, channels, length, 2, 3);
+    // Input: 2 x 2 channels of:
+    // l=0 [1 2 5] l=1 [3 1 2] l=2 [3 3 5]
+    //     [9 4 1]     [4 5 1]     [2 4 6]
+    for (int i = 0; i < 18 * num * channels * length; i += 18) {
+      blob_bottom_->mutable_cpu_data()[i +  0] = 1;
+      blob_bottom_->mutable_cpu_data()[i +  1] = 2;
+      blob_bottom_->mutable_cpu_data()[i +  2] = 5;
+      blob_bottom_->mutable_cpu_data()[i +  3] = 9;
+      blob_bottom_->mutable_cpu_data()[i +  4] = 4;
+      blob_bottom_->mutable_cpu_data()[i +  5] = 1;
+
+      blob_bottom_->mutable_cpu_data()[i +  6] = 3;
+      blob_bottom_->mutable_cpu_data()[i +  7] = 1;
+      blob_bottom_->mutable_cpu_data()[i +  8] = 2;
+      blob_bottom_->mutable_cpu_data()[i +  9] = 4;
+      blob_bottom_->mutable_cpu_data()[i + 10] = 5;
+      blob_bottom_->mutable_cpu_data()[i + 11] = 1;
+
+      blob_bottom_->mutable_cpu_data()[i + 12] = 3;
+      blob_bottom_->mutable_cpu_data()[i + 13] = 3;
+      blob_bottom_->mutable_cpu_data()[i + 14] = 5;
+      blob_bottom_->mutable_cpu_data()[i + 15] = 2;
+      blob_bottom_->mutable_cpu_data()[i + 16] = 4;
+      blob_bottom_->mutable_cpu_data()[i + 17] = 6;
+    }
+    CudnnNdPoolingLayer<Dtype> layer(layer_param);
+    layer.SetUp(blob_bottom_vec_, blob_top_vec_);
+    EXPECT_EQ(blob_top_->num(), num);
+    EXPECT_EQ(blob_top_->channels(), channels);
+    EXPECT_EQ(blob_top_->length(), 4);
+    EXPECT_EQ(blob_top_->height(), 3);
+    EXPECT_EQ(blob_top_->width(), 4);
+    if (blob_top_vec_.size() > 1) {
+      EXPECT_EQ(blob_top_mask_->num(), num);
+      EXPECT_EQ(blob_top_mask_->channels(), channels);
+      EXPECT_EQ(blob_top_mask_->length(), 4);
+      EXPECT_EQ(blob_top_mask_->height(), 3);
+      EXPECT_EQ(blob_top_mask_->width(), 4);
+    }
+    layer.Forward(blob_bottom_vec_, blob_top_vec_);
+    // Expected output: num x channels of:
+    // l=0 [1 2 5 5] [3 3 5 5] [3 3 5 5] [3 3 5 5]
+    //     [9 9 5 5] [9 9 5 5] [4 5 6 6] [3 4 6 6]
+    //     [9 9 4 1] [9 9 5 1] [4 5 6 6] [2 4 6 6]
+    for (int i = 0; i < 48 * num * channels; i += 48) {
+      EXPECT_EQ(blob_top_->cpu_data()[i +  0], 1);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  1], 2);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  2], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  3], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  4], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  5], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  6], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  7], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  8], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  9], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 10], 4);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 11], 1);
+
+      EXPECT_EQ(blob_top_->cpu_data()[i + 12], 3);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 13], 3);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 14], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 15], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 16], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 17], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 18], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 19], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 20], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 21], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 22], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 23], 1);
+
+      EXPECT_EQ(blob_top_->cpu_data()[i + 24], 3);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 25], 3);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 26], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 27], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 28], 4);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 29], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 30], 6);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 31], 6);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 32], 4);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 33], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 34], 6);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 35], 6);
+
+      EXPECT_EQ(blob_top_->cpu_data()[i + 36], 3);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 37], 3);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 38], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 39], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 40], 3);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 41], 4);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 42], 6);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 43], 6);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 44], 2);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 45], 4);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 46], 6);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 47], 6);
+    }
+  }
+
+  // More elaborate test for 3-D 2x2x2 square cube pooling layer with nontrivial
+  // stride
+  void TestForwardCube4() {
+    LayerParameter layer_param;
+    PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+    pooling_param->mutable_kernel_shape()->add_dim(1);
+    pooling_param->mutable_kernel_shape()->add_dim(2);
+    pooling_param->mutable_kernel_shape()->add_dim(2);
+    pooling_param->mutable_pad_shape()->add_dim(0);
+    pooling_param->mutable_pad_shape()->add_dim(1);
+    pooling_param->mutable_pad_shape()->add_dim(1);
+    pooling_param->mutable_stride_shape()->add_dim(1);
+    pooling_param->mutable_stride_shape()->add_dim(2);
+    pooling_param->mutable_stride_shape()->add_dim(2);
+    pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
+    const int num = 2;
+    const int channels = 2;
+    const int length = 3;
+    blob_bottom_->Reshape(num, channels, length, 2, 3);
+    // Input: 2 x 2 channels of:
+    // l=0 [1 2 5] l=1 [3 1 2] l=2 [3 3 5]
+    //     [9 4 1]     [4 5 1]     [2 4 6]
+    for (int i = 0; i < 18 * num * channels * length; i += 18) {
+      blob_bottom_->mutable_cpu_data()[i +  0] = 1;
+      blob_bottom_->mutable_cpu_data()[i +  1] = 2;
+      blob_bottom_->mutable_cpu_data()[i +  2] = 5;
+      blob_bottom_->mutable_cpu_data()[i +  3] = 9;
+      blob_bottom_->mutable_cpu_data()[i +  4] = 4;
+      blob_bottom_->mutable_cpu_data()[i +  5] = 1;
+
+      blob_bottom_->mutable_cpu_data()[i +  6] = 3;
+      blob_bottom_->mutable_cpu_data()[i +  7] = 1;
+      blob_bottom_->mutable_cpu_data()[i +  8] = 2;
+      blob_bottom_->mutable_cpu_data()[i +  9] = 4;
+      blob_bottom_->mutable_cpu_data()[i + 10] = 5;
+      blob_bottom_->mutable_cpu_data()[i + 11] = 1;
+
+      blob_bottom_->mutable_cpu_data()[i + 12] = 3;
+      blob_bottom_->mutable_cpu_data()[i + 13] = 3;
+      blob_bottom_->mutable_cpu_data()[i + 14] = 5;
+      blob_bottom_->mutable_cpu_data()[i + 15] = 2;
+      blob_bottom_->mutable_cpu_data()[i + 16] = 4;
+      blob_bottom_->mutable_cpu_data()[i + 17] = 6;
+    }
+    CudnnNdPoolingLayer<Dtype> layer(layer_param);
+    layer.SetUp(blob_bottom_vec_, blob_top_vec_);
+    EXPECT_EQ(blob_top_->num(), num);
+    EXPECT_EQ(blob_top_->channels(), channels);
+    EXPECT_EQ(blob_top_->length(), 3);
+    EXPECT_EQ(blob_top_->height(), 2);
+    EXPECT_EQ(blob_top_->width(), 2);
+    if (blob_top_vec_.size() > 1) {
+      EXPECT_EQ(blob_top_mask_->num(), num);
+      EXPECT_EQ(blob_top_mask_->channels(), channels);
+      EXPECT_EQ(blob_top_mask_->length(), 3);
+      EXPECT_EQ(blob_top_mask_->height(), 2);
+      EXPECT_EQ(blob_top_mask_->width(), 2);
+    }
+    layer.Forward(blob_bottom_vec_, blob_top_vec_);
+
+    // Expected output: num x channels of:
+    // l=0 [1 5] [3 2] [3 5]
+    //     [9 4] [4 5] [2 6]
+
+    // input:
+    // l=0 [1 2 5] l=1 [3 1 2] l=2 [3 3 5]
+    //     [9 4 1]     [4 5 1]     [2 4 6]
+    // kernel_shape: (1,2,2)
+    // pad_shape:    (0,1,1)
+    // stride_shape: (1,2,2)
+    for (int i = 0; i < 12 * num * channels; i += 12) {
+      EXPECT_EQ(blob_top_->cpu_data()[i +  0], 1);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  1], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  2], 9);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  3], 4);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  4], 3);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  5], 2);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  6], 4);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  7], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  8], 3);
+      EXPECT_EQ(blob_top_->cpu_data()[i +  9], 5);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 10], 2);
+      EXPECT_EQ(blob_top_->cpu_data()[i + 11], 6);
+    }
+  }
+
   // Test for 3x 2 rectangular pooling layer with kernel_h > kernel_w
   void TestForwardRectHigh() {
     LayerParameter layer_param;
@@ -1587,6 +1963,10 @@ TYPED_TEST(CudnnNdPoolingLayerTest, TestForwardMaxCudnnNd) {
   this->TestForwardSquare();
   this->TestForwardRectHigh();
   this->TestForwardRectWide();
+  this->TestForwardCube();
+  this->TestForwardCube2();
+  this->TestForwardCube3();
+  this->TestForwardCube4();
 }
 
 TYPED_TEST(CudnnNdPoolingLayerTest, TestGradientMaxCudnnNd) {

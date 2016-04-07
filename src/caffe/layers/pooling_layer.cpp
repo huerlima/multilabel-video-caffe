@@ -78,11 +78,10 @@ void PoolingLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void PoolingLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-  // legacy support: bottom blob can be 4-dim (lmdb, etc)
-  CHECK_LE(4, bottom[0]->num_axes()) << "Input must have 4 or 5 axes, "
-      << "corresponding to (num, channels, [optional length,] height, width)";
-  CHECK_GE(5, bottom[0]->num_axes()) << "Input must have 4 or 5 axes, "
-      << "corresponding to (num, channels, [optional length,] height, width)";
+  // legacy support: bottom blob can be 4-dim or 5-dim (lmdb, etc)
+  CHECK(bottom[0]->num_axes() == 4 || bottom[0]->num_axes() == 5) << "Input "
+      << "must have 4 or 5 axes, corresponding to (num, channels, [optional "
+      << "length,] height, width)";
   channels_ = bottom[0]->channels();
   height_ = bottom[0]->height();
   width_ = bottom[0]->width();

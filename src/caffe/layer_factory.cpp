@@ -73,7 +73,7 @@ shared_ptr<Layer<Dtype> > GetConvolutionLayer(
 
 REGISTER_LAYER_CREATOR(Convolution, GetConvolutionLayer);
 
-// Get NdConvolutionLayer when cudnn
+// Get NdConvolution layer if CUDNN is available
 
 #ifdef USE_CUDNN
 template <typename Dtype>
@@ -81,17 +81,12 @@ shared_ptr<Layer<Dtype> > GetNdConvolutionLayer(
   const LayerParameter& param) {
   ConvolutionParameter_Engine engine = param.convolution_param().engine();
   if (engine == ConvolutionParameter_Engine_DEFAULT) {
-    engine = ConvolutionParameter_Engine_CAFFE;
-// #ifdef USE_CUDNN
     engine = ConvolutionParameter_Engine_CUDNN;
-// #endif
   }
   if (engine == ConvolutionParameter_Engine_CAFFE) {
     NOT_IMPLEMENTED;
-// #ifdef USE_CUDNN
   } else if (engine == ConvolutionParameter_Engine_CUDNN) {
     return shared_ptr<Layer<Dtype> >(new CudnnNdConvolutionLayer<Dtype>(param));
-// #endif
   } else {
     LOG(FATAL) << "Layer " << param.name() << " has unknown engine.";
   }
@@ -175,23 +170,18 @@ shared_ptr<Layer<Dtype> > GetLRNLayer(const LayerParameter& param) {
 REGISTER_LAYER_CREATOR(LRN, GetLRNLayer);
 
 
-// Get NdPooling layer according to engine.
+// Get NdPooling layer if CUDNN is available
 #ifdef USE_CUDNN
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetNdPoolingLayer(const LayerParameter& param) {
   PoolingParameter_Engine engine = param.pooling_param().engine();
   if (engine == PoolingParameter_Engine_DEFAULT) {
-    engine = PoolingParameter_Engine_CAFFE;
-// #ifdef USE_CUDNN
     engine = PoolingParameter_Engine_CUDNN;
-// #endif
   }
   if (engine == PoolingParameter_Engine_CAFFE) {
     NOT_IMPLEMENTED;
-// #ifdef USE_CUDNN
   } else if (engine == PoolingParameter_Engine_CUDNN) {
     return shared_ptr<Layer<Dtype> >(new CudnnNdPoolingLayer<Dtype>(param));
-// #endif
   } else {
     LOG(FATAL) << "Layer " << param.name() << " has unknown engine.";
   }

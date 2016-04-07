@@ -556,10 +556,7 @@ class NetTest : public MultiDeviceTest<TypeParam> {
     const string& proto =
         "name: 'ReshapableNetwork' "
         "input: 'data' "
-        "input_dim: 1 "
-        "input_dim: 3 "
-        "input_dim: 100 "
-        "input_dim: 100 "
+        "input_shape: { dim: 1 dim: 3 dim: 100 dim: 100 } "
         "layer { "
         "  name: 'conv1' "
         "  type: 'Convolution' "

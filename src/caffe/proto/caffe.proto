@@ -8,18 +8,20 @@ message BlobShape {
 }
 
 message BlobProto {
-  optional BlobShape shape = 8;
-  repeated float data = 6 [packed = true];
-  repeated float diff = 7 [packed = true];
-  repeated double double_data = 9 [packed = true];
-  repeated double double_diff = 10 [packed = true];
+  optional BlobShape shape = 7;
+  repeated float data = 5 [packed = true];
+  repeated float diff = 6 [packed = true];
+  repeated double double_data = 8 [packed = true];
+  repeated double double_diff = 9 [packed = true];
 
-  // 5D dimensions -- deprecated.  Use "shape" instead.
+  // 4D dimensions -- deprecated.  Use "shape" instead.
+  // blob defined/reshaped by 4D dimension will be automatically expanded to
+  // 5D by adding a singleton length (or temporal depth) dimension
   optional int32 num = 1 [default = 0];
   optional int32 channels = 2 [default = 0];
-  optional int32 length = 3 [default = 0];
-  optional int32 height = 4 [default = 0];
-  optional int32 width = 5 [default = 0];
+  optional int32 length = 7777 [default = 0];
+  optional int32 height = 3 [default = 0];
+  optional int32 width = 4 [default = 0];
 }
 
 // The BlobProtoVector is simply a way to pass multiple blobproto instances
@@ -307,7 +309,9 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 144 (last added: video_data_param)
+// LayerParameter next available layer-specific ID: 143 (last added: scale_param)
+// video-caffe custom layers start with 7777
+// Next available dextro-layer-ID: 7778 (last added: video_data_layer)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -394,7 +398,7 @@ message LayerParameter {
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
   optional TileParameter tile_param = 138;
-  optional VideoDataParameter video_data_param = 143;
+  optional VideoDataParameter video_data_param = 7777;
   optional WindowDataParameter window_data_param = 129;
 }
 
@@ -433,7 +437,7 @@ message LossParameter {
     // Outputs that receive the ignore label will NOT be ignored in computing
     // the normalization factor.
     FULL = 0;
-    // Divide by the total number of output locations that do not take the 
+    // Divide by the total number of output locations that do not take the
     // ignore_label.  If ignore_label is not set, this behaves like FULL.
     VALID = 1;
     // Divide by the batch size.
@@ -547,6 +551,7 @@ message ContrastiveLossParameter {
 }
 
 message ConvolutionParameter {
+  // video-caffe params start with 7777
   optional uint32 num_output = 1; // The number of outputs for the layer
   optional bool bias_term = 2 [default = true]; // whether to have bias terms
 
@@ -579,11 +584,11 @@ message ConvolutionParameter {
     CUDNN = 2;
   }
   optional Engine engine = 15 [default = DEFAULT];
-  
+
   // nd convolution specific parameters
-  optional BlobShape pad_shape = 19;
-  optional BlobShape kernel_shape = 20;
-  optional BlobShape stride_shape = 21;
+  optional BlobShape pad_shape = 7777;
+  optional BlobShape kernel_shape = 7778;
+  optional BlobShape stride_shape = 7779;
 
   // The axis to interpret as "channels" when performing convolution.
   // Preceding dimensions are treated as independent inputs;
@@ -827,9 +832,9 @@ message LRNParameter {
 message MemoryDataParameter {
   optional uint32 batch_size = 1;
   optional uint32 channels = 2;
-  optional uint32 length = 3 [default = 1];
-  optional uint32 height = 4;
-  optional uint32 width = 5;
+  optional uint32 length = 7777 [default = 1];
+  optional uint32 height = 3;
+  optional uint32 width = 4;
 }
 
 message MVNParameter {
@@ -844,6 +849,7 @@ message MVNParameter {
 }
 
 message PoolingParameter {
+  // video-caffe params start with 7777
   enum PoolMethod {
     MAX = 0;
     AVE = 1;
@@ -861,11 +867,12 @@ message PoolingParameter {
   optional uint32 stride = 3 [default = 1]; // The stride (equal in Y, X)
   optional uint32 stride_h = 7; // The stride height
   optional uint32 stride_w = 8; // The stride width
-  
+
   // nd pooling specific parameters
-  optional BlobShape pad_shape = 13;
-  optional BlobShape kernel_shape = 14;
-  optional BlobShape stride_shape = 15;
+  optional BlobShape pad_shape = 7777;
+  optional BlobShape kernel_shape = 7778;
+  optional BlobShape stride_shape = 7779;
+
   enum Engine {
     DEFAULT = 0;
     CAFFE = 1;
@@ -1122,17 +1129,6 @@ message VideoDataParameter {
   optional uint32 new_width = 11 [default = 0];
   // Specify if the images are color or gray
   optional bool is_color = 12 [default = true];
-  // DEPRECATED. See TransformationParameter. For data pre-processing, we can do
-  // simple scaling and subtracting the data mean, if provided. Note that the
-  // mean subtraction is always carried out before scaling.
-  optional float scale = 2 [default = 1];
-  optional string mean_file = 3;
-  // DEPRECATED. See TransformationParameter. Specify if we would like to randomly
-  // crop an image.
-  optional uint32 crop_size = 5 [default = 0];
-  // DEPRECATED. See TransformationParameter. Specify if we want to randomly mirror
-  // data.
-  optional bool mirror = 6 [default = false];
   optional string root_folder = 13 [default = ""];
 }
 

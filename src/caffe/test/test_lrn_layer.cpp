@@ -171,10 +171,6 @@ TYPED_TEST(LRNLayerTest, TestGradientAcrossChannels) {
   vector<bool> propagate_down(this->blob_bottom_vec_.size(), true);
   layer.Backward(this->blob_top_vec_, propagate_down,
                  this->blob_bottom_vec_);
-  // for (int i = 0; i < this->blob_bottom_->count(); ++i) {
-  //   std::cout << "CPU diff " << this->blob_bottom_->cpu_diff()[i]
-  //       << std::endl;
-  // }
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
 }
@@ -193,10 +189,6 @@ TYPED_TEST(LRNLayerTest, TestGradientAcrossChannelsLargeRegion) {
   vector<bool> propagate_down(this->blob_bottom_vec_.size(), true);
   layer.Backward(this->blob_top_vec_, propagate_down,
                  this->blob_bottom_vec_);
-  // for (int i = 0; i < this->blob_bottom_->count(); ++i) {
-  //   std::cout << "CPU diff " << this->blob_bottom_->cpu_diff()[i]
-  //       << std::endl;
-  // }
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
 }

@@ -30,7 +30,7 @@ void CudnnNdPoolingLayer<Dtype>::LayerSetUp(
 
   if (global_pooling_) {
     kernel_shape_ = vector<int>(bottom[0]->shape().begin()+2,
-                    bottom[0]->shape().end());
+                                bottom[0]->shape().end());
   } else {
     for (int i = 0; i < pool_param.kernel_shape().dim_size(); ++i) {
       kernel_shape_.push_back(pool_param.kernel_shape().dim(i));
@@ -62,15 +62,15 @@ void CudnnNdPoolingLayer<Dtype>::LayerSetUp(
 }
 
 template <typename Dtype>
-void CudnnNdPoolingLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>&
-    bottom,
+void CudnnNdPoolingLayer<Dtype>::Reshape(
+    const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
 
   channels_ = bottom[0]->shape(1);
   input_shape_ = bottom[0]->shape();
   if (global_pooling_) {
     kernel_shape_ = vector<int>(bottom[0]->shape().begin()+2,
-                    bottom[0]->shape().end());
+                                bottom[0]->shape().end());
   }
 
   compute_output_shape();
@@ -94,17 +94,10 @@ void CudnnNdPoolingLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>&
 template <typename Dtype>
 void CudnnNdPoolingLayer<Dtype>::compute_output_shape() {
   pooled_shape_ = std::vector<int>(input_shape_.begin(),
-                  input_shape_.begin()+2);
+                                   input_shape_.begin()+2);
   for (int i = 2; i < input_shape_.size(); ++i) {
     int dim = static_cast<int>(ceil(static_cast<float>(input_shape_[i] + 2 *
               pad_shape_[i-2] - kernel_shape_[i -2]) / stride_shape_[i-2])) + 1;
-//    std::cout << "@a: i=" << i << ", dim=" << dim << std::endl;
-/*
-  // mimicking:
-  pooled_height_ = static_cast<int>(ceil(static_cast<float>(
-      height_ + 2 * pad_h_ - kernel_h_) / stride_h_)) + 1;
-*/
-
     if (pad_shape_[i-2] > 0) {
       if ((dim - 1) * stride_shape_[i-2] >= input_shape_[i] + pad_shape_[i-2]) {
         --dim;
@@ -112,8 +105,6 @@ void CudnnNdPoolingLayer<Dtype>::compute_output_shape() {
       CHECK_LT((dim - 1) * stride_shape_[i-2],
                input_shape_[i] + pad_shape_[i-2]);
     }
-//    std::cout << "@b: i=" << i << ", dim=" << dim << std::endl;
-
     if (dim >= 1) {
       pooled_shape_.push_back(dim);
     }
@@ -121,16 +112,16 @@ void CudnnNdPoolingLayer<Dtype>::compute_output_shape() {
 }
 
 template <typename Dtype>
-void CudnnNdPoolingLayer<Dtype>::Forward_cpu(const
-    vector<Blob<Dtype>* >&
-    bottom, const vector<Blob<Dtype>* >& top) {
+void CudnnNdPoolingLayer<Dtype>::Forward_cpu(
+    const vector<Blob<Dtype>* >& bottom,
+    const vector<Blob<Dtype>* >& top) {
   NOT_IMPLEMENTED;
 }
 
 template <typename Dtype>
-void CudnnNdPoolingLayer<Dtype>::Backward_cpu(const
-    vector<Blob<Dtype>* >&
-    bottom, const vector<bool>& propagate_down,
+void CudnnNdPoolingLayer<Dtype>::Backward_cpu(
+    const vector<Blob<Dtype>* >& bottom,
+    const vector<bool>& propagate_down,
     const vector<Blob<Dtype>* >& top) {
   NOT_IMPLEMENTED;
 }

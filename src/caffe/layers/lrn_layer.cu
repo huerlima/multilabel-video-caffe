@@ -7,23 +7,24 @@ namespace caffe {
 
 template <typename Dtype>
 __global__ void LRNFillScale(const int nthreads, const Dtype* const in,
-    const int num, const int channels, const int height,
+    const int num, const int channels, const int length, const int height,
     const int width, const int size, const Dtype alpha_over_size,
     const Dtype k, Dtype* const scale) {
   CUDA_KERNEL_LOOP(index, nthreads) {
     // find out the local offset
     const int w = index % width;
     const int h = (index / width) % height;
-    const int n = index / width / height;
-    const int offset = (n * channels * height + h) * width + w;
-    const int step = height * width;
+    const int l = (index / width / height) % length;
+    const int n = index / width / height / length;
+    const int offset = ((n * channels * length + l) * height + h) * width + w;
+    const int step = length * height * width;
     const Dtype* const in_off = in + offset;
     Dtype* const scale_off = scale + offset;
     int head = 0;
     const int pre_pad = (size - 1) / 2;
     const int post_pad = size - pre_pad - 1;
     Dtype accum_scale = 0;
-    // fill the scale at [n, :, h, w]
+    // fill the scale at [n, :, l, h, w]
     // accumulate values
     while (head < post_pad && head < channels) {
       accum_scale += in_off[head * step] * in_off[head * step];
@@ -85,10 +86,10 @@ void LRNLayer<Dtype>::CrossChannelForward_gpu(
   Dtype* scale_data = scale_.mutable_gpu_data();
   // We will launch one kernel for each pixel location, and have the kernel
   // go through all the channels.
-  int n_threads = num_ * height_ * width_;
+  int n_threads = num_ * length_ * height_ * width_;
   // NOLINT_NEXT_LINE(whitespace/operators)
   LRNFillScale<<<CAFFE_GET_BLOCKS(n_threads), CAFFE_CUDA_NUM_THREADS>>>(
-      n_threads, bottom_data, num_, channels_, height_, width_, size_,
+      n_threads, bottom_data, num_, channels_, length_, height_, width_, size_,
       alpha_ / size_, k_, scale_data);
   CUDA_POST_KERNEL_CHECK;
   n_threads = bottom[0]->count();
@@ -122,16 +123,17 @@ template <typename Dtype>
 __global__ void LRNComputeDiff(const int nthreads,
     const Dtype* const bottom_data, const Dtype* const top_data,
     const Dtype* const scale, const Dtype* const top_diff,
-    const int num, const int channels, const int height,
+    const int num, const int channels, const int length, const int height,
     const int width, const int size, const Dtype negative_beta,
     const Dtype cache_ratio, Dtype* const bottom_diff) {
   CUDA_KERNEL_LOOP(index, nthreads) {
     // find out the local offset
     const int w = index % width;
     const int h = (index / width) % height;
-    const int n = index / width / height;
-    const int offset = (n * channels * height + h) * width + w;
-    const int step = height * width;
+    const int l = (index / width / height) % length;
+    const int n = index / width / height / length;
+    const int offset = ((n * channels * length + l)* height + h) * width + w;
+    const int step = length * height * width;
     const Dtype* const bottom_off = bottom_data + offset;
     const Dtype* const top_off = top_data + offset;
     const Dtype* const scale_off = scale + offset;
@@ -180,12 +182,12 @@ template <typename Dtype>
 void LRNLayer<Dtype>::CrossChannelBackward_gpu(
     const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
-  int n_threads = num_ * height_ * width_;
+  int n_threads = num_ * length_ * height_ * width_;
   // NOLINT_NEXT_LINE(whitespace/operators)
   LRNComputeDiff<<<CAFFE_GET_BLOCKS(n_threads), CAFFE_CUDA_NUM_THREADS>>>(
       n_threads, bottom[0]->gpu_data(), top[0]->gpu_data(),
-      scale_.gpu_data(), top[0]->gpu_diff(), num_, channels_, height_, width_,
-      size_, -beta_, Dtype(2. * alpha_ * beta_ / size_),
+      scale_.gpu_data(), top[0]->gpu_diff(), num_, channels_, length_, height_,
+      width_, size_, -beta_, Dtype(2. * alpha_ * beta_ / size_),
       bottom[0]->mutable_gpu_diff());
 }
 template void LRNLayer<float>::CrossChannelBackward_gpu(

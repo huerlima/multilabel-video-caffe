@@ -34,23 +34,19 @@ void Blob<Dtype>::Reshape(const int num, const int channels, const int height,
 
 template <typename Dtype>
 void Blob<Dtype>::Reshape(const vector<int>& shape) {
-  vector<int> new_shape = shape;
-  const bool force_3d_ = (shape.size() == 4) && false;
-  if (force_3d_)
-    new_shape.insert(new_shape.begin() + 2, 1);
-  CHECK_LE(new_shape.size(), kMaxBlobAxes);
+  CHECK_LE(shape.size(), kMaxBlobAxes);
   count_ = 1;
-  shape_.resize(new_shape.size());
-  if (!shape_data_ || shape_data_->size() < new_shape.size() * sizeof(int)) {
-    shape_data_.reset(new SyncedMemory(new_shape.size() * sizeof(int)));
+  shape_.resize(shape.size());
+  if (!shape_data_ || shape_data_->size() < shape.size() * sizeof(int)) {
+    shape_data_.reset(new SyncedMemory(shape.size() * sizeof(int)));
   }
   int* shape_data = static_cast<int*>(shape_data_->mutable_cpu_data());
-  for (int i = 0; i < new_shape.size(); ++i) {
-    CHECK_GE(new_shape[i], 0);
-    CHECK_LE(new_shape[i], INT_MAX / count_) << "blob size exceeds INT_MAX";
-    count_ *= new_shape[i];
-    shape_[i] = new_shape[i];
-    shape_data[i] = new_shape[i];
+  for (int i = 0; i < shape.size(); ++i) {
+    CHECK_GE(shape[i], 0);
+    CHECK_LE(shape[i], INT_MAX / count_) << "blob size exceeds INT_MAX";
+    count_ *= shape[i];
+    shape_[i] = shape[i];
+    shape_data[i] = shape[i];
   }
   if (count_ > capacity_) {
     capacity_ = count_;
@@ -420,11 +416,6 @@ bool Blob<Dtype>::ShapeEquals(const BlobProto& other) {
       other.has_height() || other.has_width()) && other.has_length()) {
     // Using deprecated 5D Blob dimensions --
     // shape is (num, channels, length, height, width).
-    // Note: we do not use the normal Blob::num(), Blob::channels(), etc.
-    // methods as these index from the beginning of the blob shape, where legacy
-    // parameter blobs were indexed from the end of the blob shape (e.g., bias
-    // Blob shape (1 x 1 x 1 x 1 x N), IP layer weight Blob shape
-    // (1 x 1 x 1 x M x N)).
     return shape_.size() <= 5 &&
            LegacyShape(-5) == other.num() &&
            LegacyShape(-4) == other.channels() &&

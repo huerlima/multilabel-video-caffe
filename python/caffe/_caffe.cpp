@@ -57,7 +57,7 @@ void CheckContiguousArray(PyArrayObject* arr, string name,
     throw std::runtime_error(name + " must be C contiguous");
   }
   if (PyArray_NDIM(arr) != 5) {
-    throw std::runtime_error(name + " must be 4-d");
+    throw std::runtime_error(name + " must be 5-d");
   }
   if (PyArray_TYPE(arr) != NPY_FLOAT32) {
     throw std::runtime_error(name + " must be float32");

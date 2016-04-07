@@ -250,7 +250,7 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
     vector<int> indices(5);
     for (int item_id = 0; item_id < mat_num; ++item_id) {
       cv::Mat cv_img = mat_vector[item_id].clone();
-      CHECK(mat_vector[item_id].depth() == CV_8U) << "Image data type must " <<
+      CHECK(cv_img.depth() == CV_8U) << "Image data type must " <<
         "be unsigned byte";
 
       // mean cube subtraction for C3D data
@@ -589,9 +589,9 @@ vector<int> DataTransformer<Dtype>::InferBlobShape(const cv::Mat& cv_img) {
 template<typename Dtype>
 vector<int> DataTransformer<Dtype>::InferBlobShape(
     const vector<cv::Mat> & mat_vector, const bool is_video) {
+  const int num = mat_vector.size();
+  CHECK_GT(num, 0) << "There is no cv_img to in the vector";
   if (is_video) {
-    const int num = mat_vector.size();
-    CHECK_GT(num, 0) << "There is no cv_img to in the vector";
     vector<int> tmp_shape = InferBlobShape(mat_vector, false);
     CHECK_EQ(tmp_shape.size(), 4) << "A mat_vector must be 4-dimensional";
     vector<int> shape(5);
@@ -602,8 +602,6 @@ vector<int> DataTransformer<Dtype>::InferBlobShape(
     shape[4] = tmp_shape[3];
     return shape;
   } else {
-    const int num = mat_vector.size();
-    CHECK_GT(num, 0) << "There is no cv_img to in the vector";
     // Use first cv_img in the vector to InferBlobShape.
     vector<int> shape;
     shape = InferBlobShape(mat_vector[0]);

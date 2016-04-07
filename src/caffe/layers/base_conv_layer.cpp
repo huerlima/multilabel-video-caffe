@@ -16,16 +16,13 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   force_nd_im2col_ = conv_param.force_nd_im2col();
   channel_axis_ = bottom[0]->CanonicalAxisIndex(conv_param.axis());
   const int num_axes = bottom[0]->num_axes();
-  int first_spatial_axis;
   if (num_axes == 5 && channel_axis_ == 1 && bottom[0]->shape(2) == 1) {
     forced_3d_ = true;
-    first_spatial_axis = 3;   // not 2
-    num_spatial_axes_ = 2;    // not 3
   } else {
     forced_3d_ = false;
-    first_spatial_axis = channel_axis_ + 1;
-    num_spatial_axes_ = num_axes - first_spatial_axis;
   }
+  const int first_spatial_axis = channel_axis_ + 1 + forced_3d_;
+  num_spatial_axes_ = num_axes - first_spatial_axis;
   CHECK_GE(num_spatial_axes_, 0);
   vector<int> bottom_dim_blob_shape(1, num_spatial_axes_ + 1);
   vector<int> spatial_dim_blob_shape(1, std::max(num_spatial_axes_, 1));
@@ -41,36 +38,14 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     kernel_shape_data[1] = conv_param.kernel_w();
   } else {
     const int num_kernel_dims = conv_param.kernel_size_size();
-    if (forced_3d_) {
-      CHECK(num_kernel_dims == 1 ||
-            num_kernel_dims == num_spatial_axes_ ||
-            num_kernel_dims == num_spatial_axes_ + 1)
-          << "kernel_size must be specified once, or once per spatial "
-          << "dimension (kernel_size specified " << num_kernel_dims
-          << " times; " << num_spatial_axes_ << " spatial dims).";
-    } else {
-      CHECK(num_kernel_dims == 1 || num_kernel_dims == num_spatial_axes_)
-          << "kernel_size must be specified once, or once per spatial "
-          << "dimension (kernel_size specified " << num_kernel_dims
-          << " times; " << num_spatial_axes_ << " spatial dims).";
-    }
-    if (num_kernel_dims == 1) {
+    CHECK(num_kernel_dims == 1 || num_kernel_dims == num_spatial_axes_)
+        << "kernel_size must be specified once, or once per spatial dimension "
+        << "(kernel_size specified " << num_kernel_dims << " times; "
+        << num_spatial_axes_ << " spatial dims).";
       for (int i = 0; i < num_spatial_axes_; ++i) {
         kernel_shape_data[i] =
-            conv_param.kernel_size(0);
+            conv_param.kernel_size((num_kernel_dims == 1) ? 0 : i);
       }
-    } else if (num_kernel_dims == num_spatial_axes_) {
-      for (int i = 0; i < num_spatial_axes_; ++i) {
-        kernel_shape_data[i] =
-            conv_param.kernel_size(i);
-      }
-    }
-    if (num_kernel_dims == num_spatial_axes_ + 1) {
-      for (int i = 0; i < num_spatial_axes_; ++i) {
-        kernel_shape_data[i] =
-            conv_param.kernel_size(i + 1);   // ignore the first kernel_size
-      }
-    }
   }
   for (int i = 0; i < num_spatial_axes_; ++i) {
     CHECK_GT(kernel_shape_data[i], 0) << "Filter dimensions must be nonzero.";
@@ -87,30 +62,15 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     stride_data[1] = conv_param.stride_w();
   } else {
     const int num_stride_dims = conv_param.stride_size();
-    if (forced_3d_) {
-      CHECK(num_stride_dims == 0 || num_stride_dims == 1 ||
-            num_stride_dims == num_spatial_axes_ ||
-            num_stride_dims == num_spatial_axes_ + 1)
-          << "stride must be specified once, or once per spatial dimension "
-          << "(stride specified " << num_stride_dims << " times; "
-          << num_spatial_axes_ << " spatial dims).";
-    } else {
-      CHECK(num_stride_dims == 0 || num_stride_dims == 1 ||
-            num_stride_dims == num_spatial_axes_)
-          << "stride must be specified once, or once per spatial dimension "
-          << "(stride specified " << num_stride_dims << " times; "
-          << num_spatial_axes_ << " spatial dims).";
-    }
+    CHECK(num_stride_dims == 0 || num_stride_dims == 1 ||
+          num_stride_dims == num_spatial_axes_)
+        << "stride must be specified once, or once per spatial dimension "
+        << "(stride specified " << num_stride_dims << " times; "
+        << num_spatial_axes_ << " spatial dims).";
     const int kDefaultStride = 1;
     for (int i = 0; i < num_spatial_axes_; ++i) {
-      if (num_stride_dims == 0)
-        stride_data[i] = kDefaultStride;
-      else if (num_stride_dims == 1)
-        stride_data[i] = conv_param.stride(0);
-      else if (num_stride_dims == num_spatial_axes_ )
-        stride_data[i] = conv_param.stride(i);
-      else if (num_stride_dims == num_spatial_axes_ + 1)
-        stride_data[i] = conv_param.stride(i + 1);   // ignore the first one
+      stride_data[i] = (num_stride_dims == 0) ? kDefaultStride :
+          conv_param.stride((num_stride_dims == 1) ? 0 : i);
       CHECK_GT(stride_data[i], 0) << "Stride dimensions must be nonzero.";
     }
   }
@@ -126,60 +86,30 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     pad_data[1] = conv_param.pad_w();
   } else {
     const int num_pad_dims = conv_param.pad_size();
-    if (forced_3d_) {
-      CHECK(num_pad_dims == 0 || num_pad_dims == 1 ||
-            num_pad_dims == num_spatial_axes_ ||
-            num_pad_dims == num_spatial_axes_ + 1)
-          << "pad must be specified once, or once per spatial dimension "
-          << "(pad specified " << num_pad_dims << " times; "
-          << num_spatial_axes_ << " spatial dims).";
-    } else {
-      CHECK(num_pad_dims == 0 || num_pad_dims == 1 ||
-            num_pad_dims == num_spatial_axes_)
-          << "pad must be specified once, or once per spatial dimension "
-          << "(pad specified " << num_pad_dims << " times; "
-          << num_spatial_axes_ << " spatial dims).";
-    }
+    CHECK(num_pad_dims == 0 || num_pad_dims == 1 ||
+          num_pad_dims == num_spatial_axes_)
+        << "pad must be specified once, or once per spatial dimension "
+        << "(pad specified " << num_pad_dims << " times; "
+        << num_spatial_axes_ << " spatial dims).";
     const int kDefaultPad = 0;
     for (int i = 0; i < num_spatial_axes_; ++i) {
-      if (num_pad_dims == 0)
-        pad_data[i] = kDefaultPad;
-      else if (num_pad_dims == 1)
-        pad_data[i] = conv_param.pad(0);
-      else if (num_pad_dims == num_spatial_axes_ )
-        pad_data[i] = conv_param.pad(i);
-      else if (num_pad_dims == num_spatial_axes_ + 1)
-        pad_data[i] = conv_param.pad(i + 1);   // ignore the first one
+      pad_data[i] = (num_pad_dims == 0) ? kDefaultPad :
+          conv_param.pad((num_pad_dims == 1) ? 0 : i);
     }
   }
   // Setup dilation dimensions (dilation_).
   dilation_.Reshape(spatial_dim_blob_shape);
   int* dilation_data = dilation_.mutable_cpu_data();
   const int num_dilation_dims = conv_param.dilation_size();
-  if (forced_3d_) {
-    CHECK(num_dilation_dims == 0 || num_dilation_dims == 1 ||
-          num_dilation_dims == num_spatial_axes_ ||
-          num_dilation_dims == num_spatial_axes_ + 1)
-        << "dilation must be specified once, or once per spatial dimension "
-        << "(dilation specified " << num_dilation_dims << " times; "
-        << num_spatial_axes_ << " spatial dims).";
-  } else {
-    CHECK(num_dilation_dims == 0 || num_dilation_dims == 1 ||
-          num_dilation_dims == num_spatial_axes_)
-        << "dilation must be specified once, or once per spatial dimension "
-        << "(dilation specified " << num_dilation_dims << " times; "
-        << num_spatial_axes_ << " spatial dims).";
-  }
+  CHECK(num_dilation_dims == 0 || num_dilation_dims == 1 ||
+        num_dilation_dims == num_spatial_axes_)
+      << "dilation must be specified once, or once per spatial dimension "
+      << "(dilation specified " << num_dilation_dims << " times; "
+      << num_spatial_axes_ << " spatial dims).";
   const int kDefaultDilation = 1;
   for (int i = 0; i < num_spatial_axes_; ++i) {
-    if (num_dilation_dims == 0)
-      dilation_data[i] = kDefaultDilation;
-    else if (num_dilation_dims == 1)
-      dilation_data[i] = conv_param.dilation(0);
-    else if (num_dilation_dims == num_spatial_axes_ )
-      dilation_data[i] = conv_param.dilation(i);
-    else if (num_dilation_dims == num_spatial_axes_ + 1)
-      dilation_data[i] = conv_param.dilation(i + 1);   // ignore the first one
+    dilation_data[i] = (num_dilation_dims == 0) ? kDefaultDilation :
+                       conv_param.dilation((num_dilation_dims == 1) ? 0 : i);
   }
   // Special case: im2col is the identity for 1x1 convolution with stride 1
   // and no padding, so flag for skipping the buffer and transformation.
@@ -218,6 +148,8 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   if (this->blobs_.size() > 0) {
     CHECK_EQ(1 + bias_term_, this->blobs_.size())
         << "Incorrect number of weight blobs.";
+    // true_blob_shape is original blob_shape (n,c,h,w) in case of forced_3d_
+    // where blob_shape is expanded to (n,c,1,h,w)
     vector<int> true_blob_shape = this->blobs_[0]->shape();
     if (forced_3d_) true_blob_shape.erase(true_blob_shape.begin()+2);
     if (weight_shape != true_blob_shape) {
@@ -262,8 +194,16 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-  const int first_spatial_axis = forced_3d_ ? 3 : channel_axis_ + 1;
-  CHECK_EQ(bottom[0]->num_axes(), first_spatial_axis + num_spatial_axes_)
+  const int num_axes = bottom[0]->num_axes();
+  // Setting forced_3d_ in LayerSetup() alone is not sufficient as that can be
+  // skipped and Reshape() is directed called.
+  if (num_axes == 5 && channel_axis_ == 1 && bottom[0]->shape(2) == 1) {
+    forced_3d_ = true;
+  } else {
+    forced_3d_ = false;
+  }
+  const int first_spatial_axis = channel_axis_ + 1 + forced_3d_;
+  CHECK_EQ(num_axes, first_spatial_axis + num_spatial_axes_)
       << "bottom num_axes may not change.";
   num_ = bottom[0]->count(0, channel_axis_);
   CHECK_EQ(bottom[0]->shape(channel_axis_), channels_)
@@ -280,7 +220,7 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
       bottom[0]->shape().begin() + channel_axis_);
   top_shape.push_back(num_output_);
   if (forced_3d_)
-    top_shape.push_back(1);
+    top_shape.push_back(1);  // in place of length
   for (int i = 0; i < num_spatial_axes_; ++i) {
     top_shape.push_back(output_shape_[i]);
   }

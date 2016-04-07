@@ -17,8 +17,14 @@ template <typename TypeParam>
 class BiasLayerTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
 
+/**
+ * BiasLayer computes a sum of two input Blobs, with the shape of the
+ * latter Blob "broadcast" to match the shape of the former. The shape must be
+ * contiguous dimensions.
+**/
  protected:
   BiasLayerTest()
+        // blob shape will be expanded to (2, 3, 1=length, 4, 5)
       : blob_bottom_(new Blob<Dtype>(2, 3, 4, 5)),
         blob_bottom_eltwise_(new Blob<Dtype>(2, 3, 4, 5)),
         blob_bottom_broadcast_0_(new Blob<Dtype>()),
@@ -28,10 +34,16 @@ class BiasLayerTest : public MultiDeviceTest<TypeParam> {
         blob_top_(new Blob<Dtype>()) {
     Caffe::set_random_seed(1701);
     vector<int> broadcast_shape(2);
+    // This is a case where broadcasting shape is (2, 3): shapes of first two
+    // dimensions of blob_bottom_ (n, c)
     broadcast_shape[0] = 2; broadcast_shape[1] = 3;
     this->blob_bottom_broadcast_0_->Reshape(broadcast_shape);
+    // This is a case where broadcasting shape is (3, 1): shapes of the next two
+    // dimensions (c, l)
     broadcast_shape[0] = 3; broadcast_shape[1] = 1;
     this->blob_bottom_broadcast_1_->Reshape(broadcast_shape);
+    // This is a case where broadcasting shape is (4, 5): shapes of the last two
+    // dimensions (h, w)
     broadcast_shape[0] = 4; broadcast_shape[1] = 5;
     this->blob_bottom_broadcast_2_->Reshape(broadcast_shape);
     FillerParameter filler_param;

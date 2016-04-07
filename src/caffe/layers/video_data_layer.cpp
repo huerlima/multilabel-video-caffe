@@ -69,11 +69,11 @@ void VideoDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>&
   // Read a video clip, and use it to initialize the top blob.
   std::vector<cv::Mat> cv_imgs;
   bool read_video_result = ReadVideoToCVMat(root_folder +
-                                             lines_[lines_id_].first,
-                                             lines_[lines_id_].second,
-                                             new_length, new_height, new_width,
-                                             is_color,
-                                             &cv_imgs);
+                                            lines_[lines_id_].first,
+                                            lines_[lines_id_].second,
+                                            new_length, new_height, new_width,
+                                            is_color,
+                                            &cv_imgs);
   CHECK(read_video_result) << "Could not load " << lines_[lines_id_].first <<
                               " at frame " << lines_[lines_id_].second << ".";
   CHECK_EQ(cv_imgs.size(), new_length) << "Could not load " <<

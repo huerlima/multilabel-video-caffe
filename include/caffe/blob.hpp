@@ -152,7 +152,7 @@ class Blob {
     CHECK_LT(index, 5);
     CHECK_GE(index, -5);
     if (index >= num_axes() || index < -num_axes()) {
-      // Axis is out of range, but still in [0, 3] (or [-4, -1] for reverse
+      // Axis is out of range, but still in [0, 4] (or [-5, -1] for reverse
       // indexing) -- this special case simulates the one-padding used to fill
       // extraneous axes of legacy blobs.
       return 1;

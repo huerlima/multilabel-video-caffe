@@ -93,6 +93,38 @@ TYPED_TEST(VideoDataLayerTest, TestRead) {
   }
 }
 
+TYPED_TEST(VideoDataLayerTest, TestCrop) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter param;
+  VideoDataParameter* video_data_param = param.mutable_video_data_param();
+  video_data_param->set_batch_size(5);
+  video_data_param->set_source(this->filename_.c_str());
+  video_data_param->set_new_length(16);
+  video_data_param->set_new_height(132);
+  video_data_param->set_new_width(123);
+  video_data_param->set_shuffle(false);
+  TransformationParameter* transform_param =
+      param.mutable_transform_param();
+  transform_param->set_crop_size(77);
+  transform_param->set_mirror(true);
+
+  VideoDataLayer<Dtype> layer(param);
+  layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+  EXPECT_EQ(this->blob_top_data_->num(), 5);
+  EXPECT_EQ(this->blob_top_data_->channels(), 3);
+  EXPECT_EQ(this->blob_top_data_->length(), 16);
+  EXPECT_EQ(this->blob_top_data_->height(), 77);
+  EXPECT_EQ(this->blob_top_data_->width(), 77);
+  EXPECT_EQ(this->blob_top_label_->num(), 5);
+  // Go through the data twice
+  for (int iter = 0; iter < 2; ++iter) {
+    layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+    for (int i = 0; i < 5; ++i) {
+      EXPECT_EQ(i, this->blob_top_label_->cpu_data()[i]);
+    }
+  }
+}
+
 TYPED_TEST(VideoDataLayerTest, TestResize) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter param;

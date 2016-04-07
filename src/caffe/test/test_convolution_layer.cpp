@@ -271,7 +271,6 @@ TYPED_TEST(ConvolutionLayerTest, TestDilatedConvolution) {
   vector<int> bottom_shape;
   bottom_shape.push_back(2);
   bottom_shape.push_back(3);
-  bottom_shape.push_back(1);  // necessary
   bottom_shape.push_back(8);
   bottom_shape.push_back(7);
   this->blob_bottom_vec_.push_back(this->blob_bottom_2_);
@@ -721,10 +720,8 @@ TYPED_TEST(ConvolutionLayerTest, TestGradient) {
       layer_param.mutable_convolution_param();
   this->blob_bottom_vec_.push_back(this->blob_bottom_2_);
   this->blob_top_vec_.push_back(this->blob_top_2_);
-  convolution_param->add_kernel_size(1);
   convolution_param->add_kernel_size(3);
   convolution_param->add_kernel_size(3);
-  convolution_param->add_stride(1);
   convolution_param->add_stride(2);
   convolution_param->add_stride(2);
   convolution_param->set_num_output(2);
@@ -744,7 +741,6 @@ TYPED_TEST(ConvolutionLayerTest, TestDilatedGradient) {
   vector<int> bottom_shape;
   bottom_shape.push_back(2);
   bottom_shape.push_back(3);
-  bottom_shape.push_back(1);
   bottom_shape.push_back(5);
   bottom_shape.push_back(6);
   for (int i = 0; i < this->blob_bottom_vec_.size(); ++i) {
@@ -812,10 +808,8 @@ TYPED_TEST(ConvolutionLayerTest, TestGradientGroup) {
   LayerParameter layer_param;
   ConvolutionParameter* convolution_param =
       layer_param.mutable_convolution_param();
-  convolution_param->add_kernel_size(1);
   convolution_param->add_kernel_size(3);
   convolution_param->add_kernel_size(3);
-  convolution_param->add_stride(1);
   convolution_param->add_stride(2);
   convolution_param->add_stride(2);
   convolution_param->set_num_output(3);

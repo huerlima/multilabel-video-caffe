@@ -98,10 +98,8 @@ void CudnnNdConvolutionLayer<Dtype>::LayerSetUp(
   this->param_propagate_down_.resize(this->blobs_.size(), true);
 
   // Initialize CUDA streams and cuDNN.
-  stream_         = new cudaStream_t[this->group_ *
-      CUDNN_STREAMS_PER_GROUP];
-  handle_         = new cudnnHandle_t[this->group_ *
-      CUDNN_STREAMS_PER_GROUP];
+  stream_ = new cudaStream_t[this->group_ * CUDNN_STREAMS_PER_GROUP];
+  handle_ = new cudnnHandle_t[this->group_ * CUDNN_STREAMS_PER_GROUP];
   workspaceSizeInBytes = 0;
   workspace = NULL;
 

@@ -63,6 +63,7 @@ class LRNLayer : public Layer<Dtype> {
   Dtype k_;
   int num_;
   int channels_;
+  int length_;
   int height_;
   int width_;
 

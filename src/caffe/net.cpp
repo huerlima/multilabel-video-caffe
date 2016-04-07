@@ -425,7 +425,8 @@ void Net<Dtype>::AppendTop(const NetParameter& param, const int layer_id,
         blob_pointer->Reshape(param.input_dim(top_id * 4),
                               param.input_dim(top_id * 4 + 1),
                               param.input_dim(top_id * 4 + 2),
-                              param.input_dim(top_id * 4 + 3));
+                              param.input_dim(top_id * 4 + 3),
+                              param.input_dim(top_id * 4 + 4));
       } else {
         blob_pointer->Reshape(param.input_shape(top_id));
       }
