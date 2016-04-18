@@ -37,11 +37,6 @@ Follow these steps to train C3D on UCF-101.
 5. Run training script: e.g. `cd ${video-caffe-root} && examples/c3d_ucf101/train_ucf101.sh`
 6. Sit back and enjoy.
 
-## Note
-
-* This version of Caffe only works with Nvidia GPU (CUDA) because NdConvolution and NdPooling layers depend on CUDA.
-* For building information refer to the [original Caffe readme](README-original.md) or [official Caffe installation guide](http://caffe.berkeleyvision.org/installation.html).
-
 ## License and Citation
 
 Caffe is released under the [BSD 2-Clause license](https://github.com/BVLC/caffe/blob/master/LICENSE).
