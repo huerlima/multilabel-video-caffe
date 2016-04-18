@@ -6,6 +6,13 @@ This is 3-D Convolution (C3D) and video reader implementation in the latest Caff
 
 Check out the [original Caffe readme](README-original.md) for Caffe-specific information.
 
+## Requirements
+
+In addition to [prerequisites for Caffe](http://caffe.berkeleyvision.org/installation.html#prerequisites), video-caffe depends on cuDNN. It is known to work with CuDNN v4, and it may need some tweaking to make it build with v3.
+
+* If you use "make" to build make sure `Makefile.config` point to the right paths for CUDA and CuDNN.
+* If you use "cmake" to build, double-check `CUDNN_INCLUDE` and `CUDNN_LIBRARY`. You may want to cmake with something like `cmake -DCUDNN_INCLUDE="/your/path/to/include" -DCUDNN_LIBRARY="/your/path/to/lib" ${video-caffe-root}`.
+
 ## Building video-caffe
 
 In a nutshell, key steps to build video-caffe are:
@@ -14,9 +21,10 @@ In a nutshell, key steps to build video-caffe are:
 2. `cd video-caffe`
 3. `mkdir build && cd build`
 4. `cmake ..`
-5. `make all`
-6. `make install`
-7. (optional) `make runtest`
+5. Make sure CUDA and CuDNN are detected and their paths are correct.
+6. `make all`
+7. `make install`
+8. (optional) `make runtest`
 
 ## UCF-101 training demo
 
