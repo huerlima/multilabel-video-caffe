@@ -93,7 +93,7 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
   ConvolutionLayer<Dtype>::Reshape(bottom, top);
   CHECK_LE(2, this->num_spatial_axes_)
       << "CuDNNConvolution input must have 2 spatial axes "
-      << "(e.g., height and width)."
+      << "(e.g., height and width). "
       << "Use 'engine: CAFFE' for general ND convolution.";
   bottom_offset_ = this->bottom_dim_ / this->group_;
   top_offset_ = this->top_dim_ / this->group_;

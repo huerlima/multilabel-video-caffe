@@ -1564,7 +1564,7 @@ def CheckForMultilineCommentsAndStrings(filename, clean_lines, linenum, error):
 caffe_alt_function_list = (
     ('memset', ['caffe_set', 'caffe_memset']),
     ('cudaMemset', ['caffe_gpu_set', 'caffe_gpu_memset']),
-    ('memcpy', ['caffe_copy', 'caffe_memcpy']),
+    ('memcpy', ['caffe_copy']),
     ('cudaMemcpy', ['caffe_copy', 'caffe_gpu_memcpy']),
     )
 
@@ -1595,10 +1595,10 @@ def CheckCaffeAlternatives(filename, clean_lines, linenum, error):
 def CheckCaffeDataLayerSetUp(filename, clean_lines, linenum, error):
   """Except the base classes, Caffe DataLayer should define DataLayerSetUp
      instead of LayerSetUp.
-
+     
   The base DataLayers define common SetUp steps, the subclasses should
   not override them.
-
+  
   Args:
     filename: The name of the current file.
     clean_lines: A CleansedLines instance containing the file.

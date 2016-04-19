@@ -96,7 +96,6 @@ class DataTransformer {
                   const bool is_video = false);
 
   // ------------------------------------------------------------------
-  // Dextro custom functions
   // Actual function that applies the transform, given the offset
   // of the crop
   void Transform(const cv::Mat& cv_img, Blob<Dtype>* transformed_blob,

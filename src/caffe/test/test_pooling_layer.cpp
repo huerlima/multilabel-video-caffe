@@ -2193,4 +2193,5 @@ TYPED_TEST(CudnnNdPoolingLayerTest, TestSetupCudnnNd4d) {
 }
 
 #endif
+
 }  // namespace caffe

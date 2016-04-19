@@ -1,5 +1,6 @@
 #ifdef USE_CUDNN
 #include <vector>
+
 #include "caffe/layers/cudnn_conv_layer.hpp"
 
 namespace caffe {
