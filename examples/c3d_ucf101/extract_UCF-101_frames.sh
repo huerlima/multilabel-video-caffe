@@ -12,9 +12,6 @@ for f in ${UCF101DIR}/*/*.avi; do
   dir=${f::-4}
   echo -----
   echo Extracting frames from ${f} into ${dir}...
-  #filename=$(basename "$f")
-  #extension="${filename##*.}"
-  #filename="${filename%.*}"
   if [[ ! -d ${dir} ]]; then
     echo Creating directory=${dir}
     mkdir -p ${dir}
