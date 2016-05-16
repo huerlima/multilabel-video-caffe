@@ -255,7 +255,7 @@ def _Net_set_input_arrays(self, data, labels):
     """
     if labels.ndim == 1:
         labels = np.ascontiguousarray(labels[:, np.newaxis, np.newaxis,
-                                             np.newaxis])
+                                             np.newaxis, np.newaxis])
     return self._set_input_arrays(data, labels)
 
 
