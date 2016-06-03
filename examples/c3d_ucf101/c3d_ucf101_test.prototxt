@@ -13,7 +13,7 @@ layer {
     new_height: 128
     new_width: 171
     new_length: 16
-    shuffle: true
+    shuffle: false
   }
   include {
     phase: TEST
