@@ -104,7 +104,10 @@ if $WITH_CUDA ; then
   ln -s /usr/local/cuda-$CUDA_VERSION /usr/local/cuda
 
   if $WITH_CUDNN ; then
-    apt-get install -y --no-install-recommends libcudnn5-dev
+    # TODO(chuck): for now, stay with cudnn4 until all backward compatibility
+    #              issues are cleared
+    # apt-get install -y --no-install-recommends libcudnn5-dev
+    apt-get install -y --no-install-recommends libcudnn4-dev
   fi
 fi
 
