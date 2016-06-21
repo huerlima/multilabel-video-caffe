@@ -61,7 +61,11 @@ class CudnnNdConvolutionLayer : public Layer<Dtype> {
   vector<cudnnConvolutionDescriptor_t> conv_descs_;
   int bottom_offset_, top_offset_, weight_offset_, bias_offset_;
   size_t workspaceSizeInBytes;
-  void *workspace;
+  void** workspace;
+  cudnnConvolutionBwdFilterAlgo_t* bwd_filter_algo_;
+  cudnnConvolutionBwdDataAlgo_t* bwd_data_algo_;
+  size_t* workspace_bwd_filter_sizes_;
+  size_t* workspace_bwd_data_sizes_;
 };
 
 }  // namespace caffe

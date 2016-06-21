@@ -80,11 +80,19 @@ void CudnnNdConvolutionLayer<Dtype>::Forward_gpu(
       // Bias.
       if (this->bias_term_) {
         const Dtype* bias_data = this->blobs_[1]->gpu_data();
+#if CUDNN_VERSION_MIN(5, 0, 0)
+        CUDNN_CHECK(cudnnAddTensor(handle_[g],
+                    cudnn::dataType<Dtype>::one,
+                    bias_desc_, bias_data + bias_offset_ * g,
+                    cudnn::dataType<Dtype>::one,
+                    top_descs_[i], top_data + top_offset_ * g));
+#else
         CUDNN_CHECK(cudnnAddTensor_v3(handle_[g],
                     cudnn::dataType<Dtype>::one,
                     bias_desc_, bias_data + bias_offset_ * g,
                     cudnn::dataType<Dtype>::one,
                     top_descs_[i], top_data + top_offset_ * g));
+#endif
       }
     }
 
@@ -126,7 +134,18 @@ void CudnnNdConvolutionLayer<Dtype>::Backward_gpu(
       // Gradient w.r.t. weights.
       if (this->param_propagate_down_[0]) {
         const Dtype* bottom_data = bottom[i]->gpu_data();
-#if CUDNN_VERSION >= 4000
+#if CUDNN_VERSION_MIN(5, 0, 0)
+        CUDNN_CHECK(cudnnConvolutionBackwardFilter(handle_[1*this->group_ +
+                    g],
+                    cudnn::dataType<Dtype>::one,
+                    bottom_descs_[i], bottom_data + bottom_offset_ * g,
+                    top_descs_[i],    top_diff + top_offset_ * g,
+                    conv_descs_[i],
+                    bwd_filter_algo_[i], workspace[1*this->group_ + g],
+                    workspace_bwd_filter_sizes_[i],
+                    cudnn::dataType<Dtype>::one,
+                    filter_desc_, weight_diff + weight_offset_ * g));
+#elif CUDNN_VERSION_MIN(4, 0, 0)
         CUDNN_CHECK(cudnnConvolutionBackwardFilter_v2(handle_[1*this->group_ +
                     g],
                     cudnn::dataType<Dtype>::one,
@@ -153,7 +172,17 @@ void CudnnNdConvolutionLayer<Dtype>::Backward_gpu(
           weight = this->blobs_[0]->gpu_data();
         }
         Dtype* bottom_diff = bottom[i]->mutable_gpu_diff();
-#if CUDNN_VERSION >= 4000
+#if CUDNN_VERSION_MIN(5, 0, 0)
+        CUDNN_CHECK(cudnnConvolutionBackwardData(handle_[2*this->group_ + g],
+                    cudnn::dataType<Dtype>::one,
+                    filter_desc_, weight + weight_offset_ * g,
+                    top_descs_[i], top_diff + top_offset_ * g,
+                    conv_descs_[i],
+                    bwd_data_algo_[i], workspace[1*this->group_ + g],
+                    workspace_bwd_data_sizes_[i],
+                    cudnn::dataType<Dtype>::zero,
+                    bottom_descs_[i], bottom_diff + bottom_offset_ * g));
+#elif CUDNN_VERSION_MIN(4, 0, 0)
         CUDNN_CHECK(cudnnConvolutionBackwardData_v2(handle_[2*this->group_ + g],
                     cudnn::dataType<Dtype>::one,
                     filter_desc_, weight + weight_offset_ * g,
