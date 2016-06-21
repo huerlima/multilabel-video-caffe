@@ -120,6 +120,11 @@ void CudnnNdConvolutionLayer<Dtype>::LayerSetUp(
   // Create filter descriptor.
   cudnn::createNdFilterDesc<Dtype>(&filter_desc_, weight_shape);
 
+  bwd_filter_algo_= new cudnnConvolutionBwdFilterAlgo_t[bottom.size()];
+  bwd_data_algo_  = new cudnnConvolutionBwdDataAlgo_t[bottom.size()];
+  workspace_bwd_filter_sizes_ = new size_t[bottom.size()];
+  workspace_bwd_data_sizes_ = new size_t[bottom.size()];
+  workspace = new void*[this->group_ * CUDNN_STREAMS_PER_GROUP];
   // Create tensor descriptor(s) for data and corresponding convolution(s).
   for (int i = 0; i < bottom.size(); i++) {
     cudnnTensorDescriptor_t bottom_desc;
@@ -131,6 +136,8 @@ void CudnnNdConvolutionLayer<Dtype>::LayerSetUp(
     cudnnConvolutionDescriptor_t conv_desc;
     cudnn::createConvolutionDesc<Dtype>(&conv_desc);
     conv_descs_.push_back(conv_desc);
+    workspace_bwd_data_sizes_[i] = 0;
+    workspace_bwd_filter_sizes_[i] = 0;
   }
 
   // Tensor descriptor for bias.

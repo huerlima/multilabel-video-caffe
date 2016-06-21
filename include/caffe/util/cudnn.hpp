@@ -130,8 +130,13 @@ template <typename Dtype>
 inline void createNdFilterDesc(cudnnFilterDescriptor_t* desc,
     std::vector<int> shape) {
   CUDNN_CHECK(cudnnCreateFilterDescriptor(desc));
+#if CUDNN_VERSION_MIN(5, 0, 0)
+  CUDNN_CHECK(cudnnSetFilterNdDescriptor(*desc, dataType<Dtype>::type,
+              CUDNN_TENSOR_NCHW, shape.size(), shape.data()));
+#else
   CUDNN_CHECK(cudnnSetFilterNdDescriptor(*desc, dataType<Dtype>::type,
               shape.size(), shape.data()));
+#endif
 }
 
 template <typename Dtype>
@@ -154,8 +159,14 @@ inline void setNdConvolutionDesc(cudnnConvolutionDescriptor_t* conv,
   int nbDims;
   std::vector<int> shape(pad.size()+2);
   cudnnDataType_t cudnn_type;
+#if CUDNN_VERSION_MIN(5, 0, 0)
+  cudnnTensorFormat_t format;
+  cudnnGetFilterNdDescriptor(filter, shape.size(), &cudnn_type, &format,
+      &nbDims, shape.data());
+#else
   cudnnGetFilterNdDescriptor(filter, shape.size(), &cudnn_type, &nbDims,
       shape.data());
+#endif
   CHECK_EQ(nbDims, pad.size()+2) <<
       "Dimensions of filters and pad don't match !";
   CHECK_EQ(nbDims, stride.size()+2) <<
@@ -216,8 +227,14 @@ inline void createNdPoolingDesc(cudnnPoolingDescriptor_t* pool_desc,
     LOG(FATAL) << "Unknown pooling method.";
   }
   CUDNN_CHECK(cudnnCreatePoolingDescriptor(pool_desc));
+#if CUDNN_VERSION_MIN(5, 0, 0)
+  CUDNN_CHECK(cudnnSetPoolingNdDescriptor(*pool_desc, *mode,
+              CUDNN_NOT_PROPAGATE_NAN, shape.size(), shape.data(), pad.data(),
+              stride.data()));
+#else
   CUDNN_CHECK(cudnnSetPoolingNdDescriptor(*pool_desc, *mode, shape.size(),
               shape.data(), pad.data(), stride.data()));
+#endif
 }
 
 template <typename Dtype>
