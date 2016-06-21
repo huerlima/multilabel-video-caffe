@@ -9,7 +9,7 @@ Check out the [original Caffe readme](README-original.md) for Caffe-specific inf
 
 ## Requirements
 
-In addition to [prerequisites for Caffe](http://caffe.berkeleyvision.org/installation.html#prerequisites), video-caffe depends on cuDNN. It is known to work with CuDNN v4, and it may need some tweaking to make it build with v3.
+In addition to [prerequisites for Caffe](http://caffe.berkeleyvision.org/installation.html#prerequisites), video-caffe depends on cuDNN. It is known to work with CuDNN v4 and v5(RC), but it may need some tweaks to build with v3.
 
 * If you use "make" to build make sure `Makefile.config` point to the right paths for CUDA and CuDNN.
 * If you use "cmake" to build, double-check `CUDNN_INCLUDE` and `CUDNN_LIBRARY`. You may want to cmake with something like `cmake -DCUDNN_INCLUDE="/your/path/to/include" -DCUDNN_LIBRARY="/your/path/to/lib" ${video-caffe-root}`.
