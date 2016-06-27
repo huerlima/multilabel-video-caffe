@@ -56,13 +56,13 @@ void CudnnNdConvolutionLayer<Dtype>::Forward_gpu(
       if (workspaceSizeInBytes_temp > workspaceSizeInBytes) {
         workspaceSizeInBytes = workspaceSizeInBytes_temp;
         // free the existing workspace and allocate a new (larger) one
-        cudaFree(this->workspace);
-        cudaError_t err = cudaMalloc(&(this->workspace),
+        cudaFree(this->workspace_data_);
+        cudaError_t err = cudaMalloc(&(this->workspace_data_),
                           workspaceSizeInBytes);
         if (err != cudaSuccess) {
           // force zero memory path
           algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
-          workspace = NULL;
+          workspace_data_ = NULL;
           workspaceSizeInBytes = 0;
         }
       }
@@ -73,7 +73,7 @@ void CudnnNdConvolutionLayer<Dtype>::Forward_gpu(
                   bottom_descs_[i], bottom_data + bottom_offset_ * g,
                   filter_desc_, weight + weight_offset_ * g,
                   conv_descs_[i],
-                  algo, workspace, workspaceSizeInBytes,
+                  algo, workspace_data_, workspaceSizeInBytes,
                   cudnn::dataType<Dtype>::zero,
                   top_descs_[i], top_data + top_offset_ * g));
 
@@ -141,7 +141,7 @@ void CudnnNdConvolutionLayer<Dtype>::Backward_gpu(
                     bottom_descs_[i], bottom_data + bottom_offset_ * g,
                     top_descs_[i],    top_diff + top_offset_ * g,
                     conv_descs_[i],
-                    bwd_filter_algo_[i], workspace[1*this->group_ + g],
+                    bwd_filter_algo_[i], workspace_[1*this->group_ + g],
                     workspace_bwd_filter_sizes_[i],
                     cudnn::dataType<Dtype>::one,
                     filter_desc_, weight_diff + weight_offset_ * g));
@@ -178,7 +178,7 @@ void CudnnNdConvolutionLayer<Dtype>::Backward_gpu(
                     filter_desc_, weight + weight_offset_ * g,
                     top_descs_[i], top_diff + top_offset_ * g,
                     conv_descs_[i],
-                    bwd_data_algo_[i], workspace[1*this->group_ + g],
+                    bwd_data_algo_[i], workspace_[1*this->group_ + g],
                     workspace_bwd_data_sizes_[i],
                     cudnn::dataType<Dtype>::zero,
                     bottom_descs_[i], bottom_diff + bottom_offset_ * g));

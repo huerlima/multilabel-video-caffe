@@ -101,7 +101,7 @@ void CudnnNdConvolutionLayer<Dtype>::LayerSetUp(
   stream_ = new cudaStream_t[this->group_ * CUDNN_STREAMS_PER_GROUP];
   handle_ = new cudnnHandle_t[this->group_ * CUDNN_STREAMS_PER_GROUP];
   workspaceSizeInBytes = 0;
-  workspace = NULL;
+  workspace_data_ = NULL;
 
   for (int g = 0; g < this->group_ * CUDNN_STREAMS_PER_GROUP; g++) {
     CUDA_CHECK(cudaStreamCreate(&stream_[g]));
@@ -124,7 +124,7 @@ void CudnnNdConvolutionLayer<Dtype>::LayerSetUp(
   bwd_data_algo_  = new cudnnConvolutionBwdDataAlgo_t[bottom.size()];
   workspace_bwd_filter_sizes_ = new size_t[bottom.size()];
   workspace_bwd_data_sizes_ = new size_t[bottom.size()];
-  workspace = new void*[this->group_ * CUDNN_STREAMS_PER_GROUP];
+  workspace_ = new void*[this->group_ * CUDNN_STREAMS_PER_GROUP];
   // Create tensor descriptor(s) for data and corresponding convolution(s).
   for (int i = 0; i < bottom.size(); i++) {
     cudnnTensorDescriptor_t bottom_desc;
