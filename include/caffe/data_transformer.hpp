@@ -83,17 +83,20 @@ class DataTransformer {
    * @param transformed_blob
    *    This is destination blob. It can be part of top blob's data if
    *    set_cpu_data() is used. See image_data_layer.cpp for an example.
-   * @param force_no_mean
-   *    If 3D mean cube was already subtracted, mean subtraction should not
-   *    happen again for individual images.
    * @param is_video
    *    A flag to reuse same random seed to replicate croppings/mirrorings and
    *    data augmentations for images within a same video clip
+   * @param frame
+   *    If is_video is enabled, frame refers to the frame index within a video
+   *    clip (usually 0~15).
    */
   void Transform(const cv::Mat& cv_img,
                   Blob<Dtype>* transformed_blob,
-                  const bool force_no_mean = false,
-                  const bool is_video = false);
+                  const bool is_video = false,
+                  const int frame = 0,
+                  const bool rand_mirror = false,
+                  const int rand_h_off = 0,
+                  const int rand_w_off = 0);
 
   // ------------------------------------------------------------------
   // Actual function that applies the transform, given the offset

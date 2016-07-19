@@ -213,28 +213,20 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
     const int length = transformed_blob->shape(2);
     const int height = transformed_blob->shape(3);
     const int width = transformed_blob->shape(4);
-    bool mean_cube_subtracted = false;
-
-    // if mean cube file is given, 3d mean cube should be subtracted at this
-    // level
-    Dtype* mean = NULL;
-    const bool has_mean_file = param_.has_mean_file();
-    if (has_mean_file) {
-      CHECK(data_mean_.channels() == mat_vector[0].channels() ||
-            data_mean_.channels() == 1);
-      CHECK_EQ(mat_vector[0].rows, data_mean_.height());
-      CHECK_EQ(mat_vector[0].cols, data_mean_.width());
-      mean = data_mean_.mutable_cpu_data();
-      if ((1 != length) && (length == data_mean_.length())) {
-        mean_cube_subtracted = true;
-      } else {
-        CHECK_EQ(1, data_mean_.length());  // will be applied later
-      }
-    }
+    const int img_height = mat_vector[0].rows;
+    const int img_width = mat_vector[0].cols;
 
     // mirroring and random cropping should not be done on each image
     // individually as images come from a same video clip
-    rng_seed_ = caffe_rng_rand();
+    // mirror / cropping is picked once here, and will be reused for all frames
+    // within a video clip
+    const bool rand_mirror = param_.mirror()
+                             ? static_cast<bool>(Rand(2)) : false;
+    const int crop_size = param_.crop_size();
+    const int rand_h_off = (phase_ == TRAIN && param_.crop_size())
+                           ? Rand(img_height - crop_size + 1) : 0;
+    const int rand_w_off = (phase_ == TRAIN && param_.crop_size())
+                           ? Rand(img_width - crop_size + 1) : 0;
 
     CHECK_GT(mat_num, 0) << "There is no MAT to add";
     CHECK_EQ(num, 1) << "First dimension (batch number) must be 1";
@@ -248,33 +240,18 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
     uni_blob_shape[4] = width;
     Blob<Dtype> uni_blob(uni_blob_shape);
     vector<int> indices(5);
+    indices[0] = 0; indices[1] = 0; indices[3] = 0; indices[4] = 0;
     for (int item_id = 0; item_id < mat_num; ++item_id) {
-      cv::Mat cv_img = mat_vector[item_id].clone();
-      CHECK(cv_img.depth() == CV_8U) << "Image data type must " <<
-        "be unsigned byte";
-
-      // mean cube subtraction for C3D data
-      if (mean_cube_subtracted) {
-        for (int c = 0; c < cv_img.channels(); ++c) {
-          for (int h = 0; h < cv_img.rows; ++h) {
-            for (int w = 0; w < cv_img.cols; ++w) {
-              int mean_index = ((c * length + item_id) * height + h) * width
-                                 + w;
-              cv_img.at<cv::Vec3b>(h, w)[c] -= mean[mean_index];
-            }
-          }
-        }
-      }
-
-      indices[0] = 0;
-      indices[1] = 0;
       indices[2] = item_id;
-      indices[3] = 0;
-      indices[4] = 0;
       int offset = transformed_blob->offset(indices);
       uni_blob.set_cpu_data(transformed_blob->mutable_cpu_data() + offset);
-
-      Transform(cv_img, &uni_blob, mean_cube_subtracted, true);
+      Transform(mat_vector[item_id],
+                &uni_blob,
+                is_video,
+                item_id,
+                rand_mirror,
+                rand_h_off,
+                rand_w_off);
     }
   } else {
     const int mat_num = mat_vector.size();
@@ -298,8 +275,11 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
                                        Blob<Dtype>* transformed_blob,
-                                       const bool force_no_mean,
-                                       const bool is_video) {
+                                       const bool is_video,
+                                       const int frame,
+                                       const bool rand_mirror,
+                                       const int rand_h_off,
+                                       const int rand_w_off) {
   const int crop_size = param_.crop_size();
   const int img_channels = cv_img.channels();
   const int img_height = cv_img.rows;
@@ -319,22 +299,35 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
   CHECK(cv_img.depth() == CV_8U) << "Image data type must be unsigned byte";
 
   const Dtype scale = param_.scale();
-  const bool do_mirror = param_.mirror() && Rand(2);
+  const bool do_mirror = is_video ?
+                         param_.mirror() && rand_mirror :
+                         param_.mirror() && Rand(2);
   const bool has_mean_file = param_.has_mean_file();
   const bool has_mean_values = mean_values_.size() > 0;
+  const bool is_mean_cube = data_mean_.shape().size() == 5;
+  unsigned int length = 0;
 
   CHECK_GT(img_channels, 0);
   CHECK_GE(img_height, crop_size);
   CHECK_GE(img_width, crop_size);
 
   Dtype* mean = NULL;
-  if (has_mean_file && !force_no_mean) {
-    CHECK_EQ(img_channels, data_mean_.channels());
-    CHECK_EQ(img_height, data_mean_.height());
-    CHECK_EQ(img_width, data_mean_.width());
+  if (has_mean_file) {
+    if (is_mean_cube) {
+      CHECK_EQ(img_channels, data_mean_.shape(1));
+      length = data_mean_.shape(2);
+      CHECK_LE(frame, length) << "frame number=" << frame << " must be less "
+                              << "or equal to length=" << length;
+      CHECK_EQ(img_height, data_mean_.shape(3));
+      CHECK_EQ(img_width, data_mean_.shape(4));
+    } else {
+      CHECK_EQ(img_channels, data_mean_.channels());
+      CHECK_EQ(img_height, data_mean_.height());
+      CHECK_EQ(img_width, data_mean_.width());
+    }
     mean = data_mean_.mutable_cpu_data();
   }
-  if (has_mean_values && !force_no_mean) {
+  if (has_mean_values) {
     CHECK(mean_values_.size() == 1 || mean_values_.size() == img_channels) <<
      "Specify either 1 mean_value or as many as channels: " << img_channels;
     if (img_channels > 1 && mean_values_.size() == 1) {
@@ -345,11 +338,6 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
     }
   }
 
-  // For videos, re-use random seed to replicate randomness
-  // (e.g. same croppings, mirrorings)
-  if (is_video)
-    SetRandFromSeed(rng_seed_);
-
   int h_off = 0;
   int w_off = 0;
   cv::Mat cv_cropped_img = cv_img;
@@ -358,8 +346,13 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
     CHECK_EQ(crop_size, width);
     // We only do random crop when we do training.
     if (phase_ == TRAIN) {
-      h_off = Rand(img_height - crop_size + 1);
-      w_off = Rand(img_width - crop_size + 1);
+      if (is_video) {
+        h_off = rand_h_off;
+        w_off = rand_w_off;
+      } else {
+        h_off = Rand(img_height - crop_size + 1);
+        w_off = Rand(img_width - crop_size + 1);
+      }
     } else {
       h_off = (img_height - crop_size) / 2;
       w_off = (img_width - crop_size) / 2;
@@ -385,19 +378,19 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
         } else {
           top_index = (c * height + h) * width + w;
         }
-        // int top_index = (c * height + h) * width + w;
         Dtype pixel = static_cast<Dtype>(ptr[img_index++]);
-        if (has_mean_file && !force_no_mean) {
-          int mean_index = (c * img_height + h_off + h) * img_width + w_off + w;
-          transformed_data[top_index] =
-            (pixel - mean[mean_index]) * scale;
-        } else {
-          if (has_mean_values && !force_no_mean) {
+        if (has_mean_file) {
+          int mean_index = is_mean_cube ? ((c * length + frame) * img_height
+                                           + h_off + h) * img_width + w_off
+                                           + w
+                                        : (c * img_height + h_off + h)
+                                          * img_width + w_off + w;
+          transformed_data[top_index] = (pixel - mean[mean_index]) * scale;
+        } else if (has_mean_values) {
             transformed_data[top_index] =
               (pixel - mean_values_[c]) * scale;
-          } else {
-            transformed_data[top_index] = pixel * scale;
-          }
+        } else {
+          transformed_data[top_index] = pixel * scale;
         }
       }
     }
