@@ -133,11 +133,13 @@ class Transformer:
         Parameters
         ----------
         in_ : name of input blob to preprocess for
-        data : (H' x W' x K) ndarray
+        data : (H' x W' x K) ndarray, or
+               (H' x W' x K x L) ndarray in case of C3D
 
         Returns
         -------
-        caffe_in : (K x H x W) ndarray for input to a Net
+        caffe_in : (K x H x W) ndarray for input to a Net, or
+                   (K x H x W x L) in case of C3D
         """
         self.__check_input(in_)
         caffe_in = data.astype(np.float32, copy=False)
@@ -146,7 +148,7 @@ class Transformer:
         raw_scale = self.raw_scale.get(in_)
         mean = self.mean.get(in_)
         input_scale = self.input_scale.get(in_)
-        in_dims = self.inputs[in_][2:]
+        in_dims = self.inputs[in_][-2:]
         if caffe_in.shape[:2] != in_dims:
             caffe_in = resize_image(caffe_in, in_dims)
         if transpose is not None:
@@ -257,6 +259,16 @@ class Transformer:
                 raise ValueError('Mean shape invalid')
             if ms != self.inputs[in_][1:]:
                 raise ValueError('Mean shape incompatible with input shape.')
+
+        # repeat mean over all length (C3D)
+        if len(self.inputs[in_]) == 5:
+            c3d = True
+        else:
+            c3d = False
+        if c3d:
+            mean = np.tile(mean,(self.inputs[in_][2], 1, 1, 1)).transpose(
+                    (1, 0, 2, 3))
+
         self.mean[in_] = mean
 
     def set_input_scale(self, in_, scale):
@@ -309,32 +321,55 @@ def resize_image(im, new_dims, interp_order=1):
 
     Parameters
     ----------
-    im : (H x W x K) ndarray
+    im : (H x W x K) or (H x W x K x L) ndarray
     new_dims : (height, width) tuple of new dimensions.
     interp_order : interpolation order, default is linear.
 
     Returns
     -------
-    im : resized ndarray with shape (new_dims[0], new_dims[1], K)
+    im : resized ndarray with shape (new_dims[0], new_dims[1], K), or
+                                    (new_dims[0], new_dims[1], K, L)
     """
-    if im.shape[-1] == 1 or im.shape[-1] == 3:
-        im_min, im_max = im.min(), im.max()
-        if im_max > im_min:
-            # skimage is fast but only understands {1,3} channel images
-            # in [0, 1].
-            im_std = (im - im_min) / (im_max - im_min)
-            resized_std = resize(im_std, new_dims, order=interp_order)
-            resized_im = resized_std * (im_max - im_min) + im_min
+
+    # (H x W x K) case
+    if im.ndim == 3:
+        if im.shape[-1] == 1 or im.shape[-1] == 3:
+            im_min, im_max = im.min(), im.max()
+            if im_max > im_min:
+                # skimage is fast but only understands {1,3} channel images
+                # in [0, 1].
+                im_std = (im - im_min) / (im_max - im_min)
+                resized_std = resize(im_std, new_dims, order=interp_order)
+                resized_im = resized_std * (im_max - im_min) + im_min
+            else:
+                # the image is a constant -- avoid divide by 0
+                ret = np.empty((new_dims[0], new_dims[1], im.shape[-1]),
+                               dtype=np.float32)
+                ret.fill(im_min)
+                return ret
         else:
-            # the image is a constant -- avoid divide by 0
-            ret = np.empty((new_dims[0], new_dims[1], im.shape[-1]),
-                           dtype=np.float32)
-            ret.fill(im_min)
-            return ret
+            # ndimage interpolates anything but more slowly.
+            scale = tuple(np.array(new_dims, dtype=float) / np.array(im.shape[:2]))
+            resized_im = zoom(im, scale + (1,), order=interp_order)
+
+    # (H x W x K x L) case (C3D)
+    elif im.ndim == 4:
+        resized_im = np.empty(new_dims + im.shape[-2:])
+        for l in range(im.shape[3]):
+            im_min, im_max = im[:,:,:,l].min(), im[:,:,:,l].max()
+            if im_max > im_min:
+                im_std = (im[:,:,:,l] - im_min) / (im_max - im_min)
+                resized_std = resize(im_std, new_dims, order=interp_order)
+                resized_im[:,:,:,l] = resized_std * (im_max - im_min) + im_min
+            else:
+                resized_im[:,:,:,l] = np.empty((new_dims[0], new_dims[1],
+                        im.shape[-2]),
+                        dtype=np.float32)
+                resized_im[:,:,:,l].fill(im_min)
+
+    # unknown case
     else:
-        # ndimage interpolates anything but more slowly.
-        scale = tuple(np.array(new_dims, dtype=float) / np.array(im.shape[:2]))
-        resized_im = zoom(im, scale + (1,), order=interp_order)
+        raise ValueError('Incorrect input array shape.')
     return resized_im.astype(np.float32)
 
 
