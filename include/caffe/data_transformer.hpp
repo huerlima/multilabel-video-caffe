@@ -89,6 +89,15 @@ class DataTransformer {
    * @param frame
    *    If is_video is enabled, frame refers to the frame index within a video
    *    clip (usually 0~15).
+   * @param rand_mirror
+   *    If is_video is enabled, rand_mirror is whether image frames within a
+   *    video clip will be flipped.
+   * @param rand_h_off
+   *    If is_video is enabled, this is crop position in y for image frames
+   *    within a video clip will be flipped.
+   * @param rand_w_off
+   *    If is_video is enabled, this is crop position in x for image frames
+   *    within a video clip will be flipped.
    */
   void Transform(const cv::Mat& cv_img,
                   Blob<Dtype>* transformed_blob,
@@ -97,12 +106,6 @@ class DataTransformer {
                   const bool rand_mirror = false,
                   const int rand_h_off = 0,
                   const int rand_w_off = 0);
-
-  // ------------------------------------------------------------------
-  // Actual function that applies the transform, given the offset
-  // of the crop
-  void Transform(const cv::Mat& cv_img, Blob<Dtype>* transformed_blob,
-      int h_off, int w_off, bool is_seg, const bool force_no_mean = false);
 
   /**
    * @brief Applies the transformation defined in the data layer's
@@ -186,18 +189,13 @@ class DataTransformer {
    * @return
    *    A uniformly random integer value from ({0, 1, ..., n-1}).
    */
-  virtual int Rand(int n);
+  virtual int Rand(const int n);
 
   void Transform(const Datum& datum, Dtype* transformed_data);
   // Tranformation parameters
   TransformationParameter param_;
 
   shared_ptr<Caffe::RNG> rng_;
-
-  // ------------------------------------------------------------------
-  // rng_seed_ for replicating random cropping/mirroring for images within a
-  // same video clip
-  unsigned int rng_seed_;
 
   Phase phase_;
   Blob<Dtype> data_mean_;

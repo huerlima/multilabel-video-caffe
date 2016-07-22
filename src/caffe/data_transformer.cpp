@@ -216,8 +216,6 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
     const int img_height = mat_vector[0].rows;
     const int img_width = mat_vector[0].cols;
 
-    // mirroring and random cropping should not be done on each image
-    // individually as images come from a same video clip
     // mirror / cropping is picked once here, and will be reused for all frames
     // within a video clip
     const bool rand_mirror = param_.mirror()
@@ -623,7 +621,7 @@ void DataTransformer<Dtype>::SetRandFromSeed(const unsigned int rng_seed) {
 }
 
 template <typename Dtype>
-int DataTransformer<Dtype>::Rand(int n) {
+int DataTransformer<Dtype>::Rand(const int n) {
   CHECK(rng_);
   CHECK_GT(n, 0);
   caffe::rng_t* rng =
