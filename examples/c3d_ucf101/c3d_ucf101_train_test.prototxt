@@ -9,7 +9,8 @@ layer {
   top: "label"
   video_data_param {
     source: "examples/c3d_ucf101/c3d_ucf101_train_split1.txt"
-    batch_size: 15
+    # 6GB GPU: use batch_size of ~30. 12GB: ~50. Adjust for your GPU memory
+    batch_size: 30
     new_height: 128
     new_width: 171
     new_length: 16
@@ -21,7 +22,13 @@ layer {
   transform_param {
     crop_size: 112
     mirror: true
-    mean_file: "examples/c3d_ucf101/ucf101_train_mean.binaryproto"
+    # using mean RGB values yields almost identical results as using full mean
+    # cube. mean cube can be downloaded at the following URL:
+    # https://dl.dropboxusercontent.com/u/306922/video-caffe-model/ucf101_train_mean.binaryproto
+    #mean_file: "examples/c3d_ucf101/ucf101_train_mean.binaryproto"
+    mean_value: 90
+    mean_value: 98
+    mean_value: 102
   }
 }
 # ----- for validation
@@ -39,13 +46,18 @@ layer {
     shuffle: true
   }
   include {
+    # test-on-train is disabled by default. turn it on in solver file to monitor
+    # overfitting
     phase: TEST
     stage: "test-on-train"
   }
   transform_param {
     crop_size: 112
     mirror: false
-    mean_file: "examples/c3d_ucf101/ucf101_train_mean.binaryproto"
+    #mean_file: "examples/c3d_ucf101/ucf101_train_mean.binaryproto"
+    mean_value: 90
+    mean_value: 98
+    mean_value: 102
   }
 }
 layer {
@@ -68,7 +80,10 @@ layer {
   transform_param {
     crop_size: 112
     mirror: false
-    mean_file: "examples/c3d_ucf101/ucf101_train_mean.binaryproto"
+    #mean_file: "examples/c3d_ucf101/ucf101_train_mean.binaryproto"
+    mean_value: 90
+    mean_value: 98
+    mean_value: 102
   }
 }
 
