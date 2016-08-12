@@ -10,7 +10,7 @@ layer {
   video_data_param {
     source: "examples/c3d_ucf101/c3d_ucf101_train_split1.txt"
     # 6GB GPU: use batch_size of ~30. 12GB: ~50. Adjust for your GPU memory
-    batch_size: 30
+    batch_size: 50
     new_height: 128
     new_width: 171
     new_length: 16

@@ -9,7 +9,7 @@ layer {
   top: "label"
   video_data_param {
     source: "examples/c3d_ucf101/c3d_ucf101_test_split1.txt"
-    batch_size: 30
+    batch_size: 50
     new_height: 128
     new_width: 171
     new_length: 16
