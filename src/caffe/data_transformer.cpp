@@ -237,12 +237,8 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
     uni_blob_shape[3] = height;
     uni_blob_shape[4] = width;
     Blob<Dtype> uni_blob(uni_blob_shape);
-    vector<int> indices(5);
-    indices[0] = 0; indices[1] = 0; indices[3] = 0; indices[4] = 0;
+    int offset;
     for (int item_id = 0; item_id < mat_num; ++item_id) {
-      indices[2] = item_id;
-      int offset = transformed_blob->offset(indices);
-      uni_blob.set_cpu_data(transformed_blob->mutable_cpu_data() + offset);
       Transform(mat_vector[item_id],
                 &uni_blob,
                 is_video,
@@ -250,6 +246,15 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
                 rand_mirror,
                 rand_h_off,
                 rand_w_off);
+      for (int c = 0; c < channels; ++c) {
+        for (int h = 0; h < height; ++h) {
+          for (int w = 0; w < width; ++w) {
+            Dtype value = uni_blob.data_at(0, c, 0, h, w);
+            offset = transformed_blob->offset(0, c, item_id, h, w);
+            *(transformed_blob->mutable_cpu_data() + offset) = value;
+          }
+        }
+      }
     }
   } else {
     const int mat_num = mat_vector.size();
@@ -493,7 +498,7 @@ void DataTransformer<Dtype>::Transform(Blob<Dtype>* input_blob,
         if (do_mirror) {
           int top_index_w = top_index_h + width - 1;
           for (int w = 0; w < width; ++w) {
-            transformed_data[top_index_w-w] = input_data[data_index_h + w];
+            transformed_data[top_index_w - w] = input_data[data_index_h + w];
           }
         } else {
           for (int w = 0; w < width; ++w) {
