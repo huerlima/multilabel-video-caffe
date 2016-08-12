@@ -237,11 +237,8 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
     uni_blob_shape[3] = height;
     uni_blob_shape[4] = width;
     Blob<Dtype> uni_blob(uni_blob_shape);
-    vector<int> indices(5);
-    indices[0] = 0; indices[1] = 0; indices[3] = 0; indices[4] = 0;
     for (int item_id = 0; item_id < mat_num; ++item_id) {
-      indices[2] = item_id;
-      int offset = transformed_blob->offset(indices);
+      int offset = transformed_blob->offset(0, 0, item_id, 0, 0);
       uni_blob.set_cpu_data(transformed_blob->mutable_cpu_data() + offset);
       Transform(mat_vector[item_id],
                 &uni_blob,

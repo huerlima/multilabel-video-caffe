@@ -75,11 +75,11 @@ void CheckContiguousArray(PyArrayObject* arr, string name,
   if (PyArray_TYPE(arr) != NPY_FLOAT32) {
     throw std::runtime_error(name + " must be float32");
   }
-  if (PyArray_DIMS(arr)[1] != channels) {
-    throw std::runtime_error(name + " has wrong number of channels");
-  }
-  if (PyArray_DIMS(arr)[2] != length) {
+  if (PyArray_DIMS(arr)[1] != length) {
     throw std::runtime_error(name + " has wrong length");
+  }
+  if (PyArray_DIMS(arr)[2] != channels) {
+    throw std::runtime_error(name + " has wrong number of channels");
   }
   if (PyArray_DIMS(arr)[3] != height) {
     throw std::runtime_error(name + " has wrong height");
