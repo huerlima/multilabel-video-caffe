@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/chuckcho/video-caffe.svg?branch=master)](https://travis-ci.org/chuckcho/video-caffe)
 
-This is 3-D Convolution (C3D) and video reader implementation in the latest Caffe (Oct 2016). The original [Facebook C3D implementation](https://github.com/facebook/C3D/) is branched out from Caffe on July 17, 2014 with git commit [b80fc86](https://github.com/BVLC/caffe/tree/b80fc862952ba4e068cf74acc0823785ce1cc0e9), and has not been rebased with the original Caffe, hence missing out quite a few new features in the lastest Caffe. I therefore pulled in C3D concept and an accompanying video reader and applied to the latest Caffe, and will try to rebase this repo with the upstream whenever there is a new important feature. This video-caffe is rebased on [4ba654f](https://github.com/BVLC/caffe/commit/4ba654f5c88c36ee8ba53964b7faf25c6d7010b4), on Oct 26 2016.
+This is 3-D Convolution (C3D) and video reader implementation in the latest Caffe (Oct 2016). The original [Facebook C3D implementation](https://github.com/facebook/C3D/) is branched out from Caffe on July 17, 2014 with git commit [b80fc86](https://github.com/BVLC/caffe/tree/b80fc862952ba4e068cf74acc0823785ce1cc0e9), and has not been rebased with the original Caffe, hence missing out quite a few new features in the lastest Caffe. I therefore pulled in C3D concept and an accompanying video reader and applied to the latest Caffe, and will try to rebase this repo with the upstream whenever there is a new important feature. This video-caffe is rebased on [6491504](https://github.com/BVLC/caffe/commit/64915042cf4854ba5a47742b46a0295d38458ea3), on Oct 31 2016.
 Please reach [me](https://github.com/chuckcho) for any feedback or question.
 
 Check out the [original Caffe readme](README-original.md) for Caffe-specific information.
@@ -38,6 +38,10 @@ Follow these steps to train C3D on UCF-101.
 5. Modify `${video-caffe-root}/examples/c3d_ucf101/c3d_ucf101_train_test.prototxt` to your taste or HW specification. Especially `batch_size` may need to be adjusted for the GPU memory.
 6. Run training script: e.g. `cd ${video-caffe-root} && examples/c3d_ucf101/train_ucf101.sh`
 7. After ~7 epochs of training, check if you have about 45% clip accuracy.
+
+## Pretrained model
+
+[Jimmy](https://github.com/lood339) provided a pretrained model ([downloadable link](https://dl.dropboxusercontent.com/u/54750216/C3D_models/c3d_ucf101_iter_38000.caffemodel)) for UCF101 (trained from scratch), achieving top-1 accuracy of 47% (as reported in https://github.com/chuckcho/video-caffe/issues/46).
 
 ## License and Citation
 
