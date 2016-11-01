@@ -29,7 +29,7 @@ Key steps to build video-caffe are:
 
 ## UCF-101 training demo
 
-Scripts and training files for C3D training on UCF-101 are located in (examples/c3d_ucf101/)[examples/c3d_ucf101/].
+Scripts and training files for C3D training on UCF-101 are located in [examples/c3d_ucf101/](examples/c3d_ucf101/).
 Steps to train C3D on UCF-101:
 
 1. Download UCF-101 dataset from [UCF-101 website](http://crcv.ucf.edu/data/UCF101.php).
