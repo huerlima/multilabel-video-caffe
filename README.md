@@ -7,6 +7,10 @@ Please reach [me](https://github.com/chuckcho) for any feedback or question.
 
 Check out the [original Caffe readme](README-original.md) for Caffe-specific information.
 
+## Branches
+
+[`refactor` branch](https://github.com/chuckcho/video-caffe/tree/refactor) is a recent re-work, based on the [original Caffe](https://github.com/BVLC/caffe) and [Nd convolution and pooling with cuDNN PR](https://github.com/BVLC/caffe/pull/3983). This is a cleaner, less-hacky implementation of 3D convolution/pooling than the `master` branch, and is supposed to more stable than the `master` branch. So, feel free to try this branch. One missing feature in the `refactor` branch (yet) is the python wrapper.
+
 ## Requirements
 
 In addition to [prerequisites for Caffe](http://caffe.berkeleyvision.org/installation.html#prerequisites), video-caffe depends on cuDNN. It is known to work with CuDNN verson 4 and 5, but it may need some efforts to build with v3.
@@ -38,7 +42,8 @@ Steps to train C3D on UCF-101:
 4. Change `${video-caffe-root}/examples/c3d_ucf101/c3d_ucf101_{train,test}_split1.txt` to correctly point to UCF-101 videos or directories that contain extracted frames.
 5. Modify `${video-caffe-root}/examples/c3d_ucf101/c3d_ucf101_train_test.prototxt` to your taste or HW specification. Especially `batch_size` may need to be adjusted for the GPU memory.
 6. Run training script: e.g. `cd ${video-caffe-root} && examples/c3d_ucf101/train_ucf101.sh`
-7. At 7 epochs of training, clip accuracy should be around 45%.
+7. (Optional) Occasionally run [`${video-caffe-root}/tool/extra/plot_training_loss.sh`](tools/extra/plot_training_loss.sh) to get training loss / validation accuracy (top1/5) plot. It's pretty hacky, so look at the file to meet your need.
+8. At 7 epochs of training, clip accuracy should be around 45%.
 
 ## Pretrained model
 
