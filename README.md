@@ -31,6 +31,81 @@ Key steps to build video-caffe are:
 7. `make install`
 8. (optional) `make runtest`
 
+## Usage
+
+Look at [`${video-caffe-root}/examples/c3d_ucf101/c3d_ucf101_train_test.prototxt`](examples/c3d_ucf101/c3d_ucf101_train_test.prototxt) for how 3D convolution and pooling are used. In a nutshell, use `NdConvolution` or `NdPooling` layer with `{kernel,stride,pad}_shape` that specifies 3D shapes in (L x H x W) where `L` is the temporal length (usually 16).
+```
+...
+# ----- video/label input -----
+layer {
+  name: "data"
+  type: "VideoData"
+  top: "data"
+  top: "label"
+  video_data_param {
+    source: "examples/c3d_ucf101/c3d_ucf101_train_split1.txt"
+    batch_size: 50
+    new_height: 128
+    new_width: 171
+    new_length: 16
+    shuffle: true
+  }
+  include {
+    phase: TRAIN
+  }
+  transform_param {
+    crop_size: 112
+    mirror: true
+    mean_value: 90
+    mean_value: 98
+    mean_value: 102
+  }
+}
+...
+# ----- 1st group -----
+layer {
+  name: "conv1a"
+  type: "NdConvolution"
+  bottom: "data"
+  top: "conv1a"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 64
+    kernel_shape { dim: 3 dim: 3 dim: 3 }
+    stride_shape { dim: 1 dim: 1 dim: 1 }
+    pad_shape    { dim: 1 dim: 1 dim: 1 }
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+...
+layer {
+  name: "pool1"
+  type: "NdPooling"
+  bottom: "conv1a"
+  top: "pool1"
+  pooling_param {
+    pool: MAX
+    kernel_shape { dim: 1 dim: 2 dim: 2 }
+    stride_shape { dim: 1 dim: 2 dim: 2 }
+  }
+}
+...
+```
+
 ## UCF-101 training demo
 
 Scripts and training files for C3D training on UCF-101 are located in [examples/c3d_ucf101/](examples/c3d_ucf101/).
