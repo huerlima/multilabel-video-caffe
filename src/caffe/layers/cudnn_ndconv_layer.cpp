@@ -138,6 +138,8 @@ void CudnnNdConvolutionLayer<Dtype>::LayerSetUp(
     conv_descs_.push_back(conv_desc);
     workspace_bwd_data_sizes_[i] = 0;
     workspace_bwd_filter_sizes_[i] = 0;
+    bwd_filter_algo_[i] = (cudnnConvolutionBwdFilterAlgo_t)0;
+    bwd_data_algo_[i] = (cudnnConvolutionBwdDataAlgo_t)0;
   }
 
   // Tensor descriptor for bias.
