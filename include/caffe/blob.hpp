@@ -181,7 +181,7 @@ class Blob {
     // in data transformer, a unit blob is used to hold (c,h,w)-contiguous data
     // and populate a (l,c,h,w)-dim video clip, hence, blob must be contiguous
     // over channels, height, and width.
-    return (((n * length() + l) * channels() + c) * height() + h) * width() + w;
+    return (((n * channels() + c) * length() + l) * height() + h) * width() + w;
   }
 
   inline int offset(const vector<int>& indices) const {
