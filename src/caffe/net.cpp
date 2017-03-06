@@ -47,6 +47,7 @@ Net<Dtype>::Net(const string& param_file, Phase phase,
 
 template <typename Dtype>
 void Net<Dtype>::Init(const NetParameter& in_param) {
+
   CHECK(Caffe::root_solver() || root_net_)
       << "root_net_ needs to be set for all non-root solvers";
   // Set phase from the state.
@@ -144,7 +145,9 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
             << this_top[top_id]->shape_string() <<  ") for shared layer "
             << layer_param.name();
       }
+
     } else {
+
       layers_[layer_id]->SetUp(bottom_vecs_[layer_id], top_vecs_[layer_id]);
     }
     LOG_IF(INFO, Caffe::root_solver())

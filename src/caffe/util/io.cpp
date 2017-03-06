@@ -233,8 +233,9 @@ bool ReadVideoToCVMat(const string& path,
     char image_filename[256];
 
     for (int i = start_frame; i <= end_frame; ++i) {
-      snprintf(image_filename, sizeof(image_filename), "%s/image_%04d.jpg",
+      snprintf(image_filename, sizeof(image_filename), "%s/images%04d.png",
                path.c_str(), i);
+      //LOG(INFO) << "reading "<< image_filename << std::endl;
       cv_img_origin = cv::imread(image_filename, cv_read_flag);
       if (!cv_img_origin.data) {
         LOG(ERROR) << "Could not read frame=" << i <<
